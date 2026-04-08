@@ -63,15 +63,23 @@ export default function MapViewer() {
         // Hide credit elements for tactical UI
         viewer.cesiumWidget.creditContainer.style.display = "none";
 
-        // Add Google Photorealistic 3D Tileset (Restores Joburg and Cape Town perfectly)
+        // Add Google Photorealistic 3D Tileset.
+        // IMPORTANT: Guard every async callback — React Strict Mode destroys and
+        // recreates effects in dev, so the viewer may be gone by the time the
+        // Promise resolves. Calling viewer.scene on a destroyed viewer throws.
         Cesium.IonResource.fromAssetId(2275207)
           .then((resource: any) => {
-            return Cesium.Cesium3DTileset.fromUrl(resource);
+            if (viewerRef.current && !viewerRef.current.isDestroyed()) {
+              return Cesium.Cesium3DTileset.fromUrl(resource);
+            }
+            return null;
           })
           .then((tileset: any) => {
-            viewer.scene.primitives.add(tileset);
+            if (tileset && viewerRef.current && !viewerRef.current.isDestroyed()) {
+              viewerRef.current.scene.primitives.add(tileset);
+            }
           })
-          .catch((e: any) => console.log('3D Tiles Err:', e));
+          .catch((e: any) => console.warn('3D Tiles Err:', e));
 
         viewerRef.current = viewer;
 

@@ -14,7 +14,9 @@ let intervalId: any = null;
 async function fetchTelemetry() {
   try {
     // Request global scope state vectors
-    const url = `https://opensky-network.org/api/states/all`;
+    // Use the local Next.js server-side proxy to avoid CORS restrictions.
+    // The worker runs in the browser context and cannot call OpenSky directly.
+    const url = `/api/flights`;
     
     const res = await fetch(url);
     if (!res.ok) {
