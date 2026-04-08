@@ -87,7 +87,24 @@ async function fetchTLEs() {
     
     satRecords = newRecords;
 
-
+    // Synthesis Loop: Multiply the Starlink assets into a massive Megaconstellation Swarm mathematically 
+    const originalCount = satRecords.length;
+    for (let i = 0; i < originalCount; i++) {
+        const entry = satRecords[i];
+        if (entry.name.includes("STARLINK")) {
+            // Generate 135 cascading echoes per Starlink to quadruple volume across the orbital chain
+            for (let j = 1; j <= 135; j++) {
+                const artificialId = entry.id + (j * 100000);
+                (satRecords as any).push({
+                   ...entry,
+                   id: artificialId,
+                   name: entry.name + ` (S-LINK ${j})`,
+                   timeOffset: -(j * 22000) // Spaced 22 seconds physically back in SGP4
+                });
+                meta[artificialId] = { ...meta[entry.id], name: entry.name + ` (S-LINK ${j})` };
+            }
+        }
+    }
 
     console.log(`🚀 Satellite Worker: Swarm Generated -> ${satRecords.length} TLEs.`);
     

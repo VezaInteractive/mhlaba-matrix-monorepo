@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 
+export type VisionMode = 'NORMAL' | 'NVG' | 'THERMAL' | 'CRT';
 export type Continent = 'AFRICA' | 'EUROPE' | 'NORTH_AMERICA' | 'SOUTH_AMERICA' | 'ASIA' | 'OCEANIA';
 
 export const POIs = {
@@ -40,6 +41,8 @@ export const POIs = {
 export type POIKey = keyof typeof POIs;
 
 interface AppState {
+  visionMode: VisionMode;
+  setVisionMode: (mode: VisionMode) => void;
   activeContinent: Continent;
   setActiveContinent: (continent: Continent) => void;
   activePOI: POIKey | null;
@@ -48,6 +51,10 @@ interface AppState {
     cctv: boolean;
     flights: boolean;
     satellites: boolean;
+    traffic: boolean;
+    maritime: boolean;
+    climate: boolean;
+    cyber: boolean;
     businesses: boolean;
     realEstate: boolean;
   };
@@ -68,6 +75,10 @@ interface AppState {
   setSelectedSatellite: (sat: { id: string; name: string; apogee: number; perigee: number; inc: number } | null) => void;
   satelliteScreenPos: { x: number; y: number } | null;
   setSatelliteScreenPos: (pos: { x: number; y: number } | null) => void;
+  selectedMaritime: { id: string; type: string; speed: number; heading: number } | null;
+  setSelectedMaritime: (vessel: { id: string; type: string; speed: number; heading: number } | null) => void;
+  maritimeScreenPos: { x: number; y: number } | null;
+  setMaritimeScreenPos: (pos: { x: number; y: number } | null) => void;
 
   // Global Time Control
   timeMultiplier: number;
@@ -81,6 +92,8 @@ interface AppState {
 }
 
 export const useAppStore = create<AppState>((set) => ({
+  visionMode: 'NORMAL',
+  setVisionMode: (mode) => set({ visionMode: mode }),
   activeContinent: 'AFRICA',
   setActiveContinent: (continent) => set({ activeContinent: continent }),
   activePOI: null,
@@ -89,6 +102,10 @@ export const useAppStore = create<AppState>((set) => ({
     cctv: false,
     flights: false,
     satellites: false,
+    traffic: false,
+    maritime: false,
+    climate: false,
+    cyber: false,
     businesses: false,
     realEstate: false,
   },
@@ -117,6 +134,10 @@ export const useAppStore = create<AppState>((set) => ({
   setSelectedSatellite: (sat) => set({ selectedSatellite: sat }),
   satelliteScreenPos: null,
   setSatelliteScreenPos: (pos) => set({ satelliteScreenPos: pos }),
+  selectedMaritime: null,
+  setSelectedMaritime: (vessel) => set({ selectedMaritime: vessel }),
+  maritimeScreenPos: null,
+  setMaritimeScreenPos: (pos) => set({ maritimeScreenPos: pos }),
 
   timeMultiplier: 1,
   setTimeMultiplier: (multiplier) => set({ timeMultiplier: multiplier }),

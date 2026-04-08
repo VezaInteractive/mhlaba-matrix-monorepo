@@ -1,7 +1,7 @@
 "use client";
 
 import { useAppStore } from "@/store/useAppStore";
-import { Video, Plane, Satellite, X, Camera, Building2, Home } from "lucide-react";
+import { Video, Plane, Satellite, Car, X, Camera, Ship, Wind, Activity, Building2, Home } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
@@ -137,7 +137,34 @@ export default function LeftPanel() {
             isActive={layers.satellites}
             onClick={() => toggleLayer("satellites")}
           />
-
+          <ToggleCard
+            icon={Car}
+            label="National Traffic"
+            value={layers.traffic ? "ACTIVE" : "OFF"}
+            isActive={layers.traffic}
+            onClick={() => toggleLayer("traffic")}
+          />
+          <ToggleCard
+            icon={Ship}
+            label="Ocean Traffic"
+            value={layers.maritime ? "FLOW" : "OFF"}
+            isActive={layers.maritime}
+            onClick={() => toggleLayer("maritime")}
+          />
+          <ToggleCard
+            icon={Wind}
+            label="Climate Forces"
+            value={layers.climate ? "LIVE" : "OFF"}
+            isActive={layers.climate}
+            onClick={() => toggleLayer("climate")}
+          />
+          <ToggleCard
+            icon={Activity}
+            label="Cyber Intel"
+            value={layers.cyber ? "WARN" : "SAFE"}
+            isActive={layers.cyber}
+            onClick={() => toggleLayer("cyber")}
+          />
           <ToggleCard
             icon={Building2}
             label="Businesses"

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAppStore, POIs, POIKey } from "@/store/useAppStore";
-import { MapPin, RotateCcw, Clock, ShieldAlert, Cpu, Plane } from "lucide-react";
+import { MapPin, RotateCcw, Clock, ShieldAlert, Cpu, Plane, Ship } from "lucide-react";
 import { useState, useEffect } from "react";
 
 const LocationPill = ({
@@ -82,7 +82,7 @@ const CONTINENT_CITIES: Record<string, { poiKey: POIKey; label: string }[]> = {
 export default function BottomDock() {
   const { activeContinent, activePOI, setActivePOI, timeMultiplier, setTimeMultiplier } = useAppStore();
   const selectedFlight = useAppStore((state) => state.selectedFlight);
-
+  const selectedMaritime = useAppStore((state) => state.selectedMaritime);
 
   const [ping, setPing] = useState(12);
 
@@ -94,7 +94,13 @@ export default function BottomDock() {
     return () => clearInterval(interval);
   }, []);
 
-
+  let shipColor = 'text-[#00FFFF]';
+  if (selectedMaritime && selectedMaritime.type) {
+    const t = selectedMaritime.type.toUpperCase();
+    if (t.includes('CARGO')) shipColor = 'text-[#FF8C00]';
+    else if (t.includes('TANKER')) shipColor = 'text-[#FF0000]';
+    else if (t.includes('PASSENGER')) shipColor = 'text-[#0000FF]';
+  }
 
   const renderCenterContent = () => {
     if (selectedFlight) {
@@ -127,7 +133,31 @@ export default function BottomDock() {
       );
     }
 
-
+    if (selectedMaritime) {
+      return (
+        <div className="flex items-center gap-8 animate-in fade-in zoom-in-95 duration-300">
+          <div className="flex items-center gap-3 border-r border-white/10 pr-6">
+            <Ship className={`w-5 h-5 ${shipColor}`} />
+            <div className="flex flex-col">
+              <span className="text-[9px] font-mono text-muted uppercase tracking-widest">Vessel Uplink</span>
+              <span className={`text-sm font-mono ${shipColor} font-bold tracking-widest uppercase truncate max-w-[120px]`}>{selectedMaritime.type || 'UNK'}</span>
+            </div>
+          </div>
+          <div className="flex flex-col min-w-[120px]">
+            <span className="text-[8px] font-mono text-muted uppercase">MMSI</span>
+            <span className="text-xs font-mono text-white font-bold">{selectedMaritime.id || 'UNK'}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8px] font-mono text-muted uppercase">Speed</span>
+            <span className="text-xs font-mono font-bold text-[#FF0055]">{(selectedMaritime.speed || 0).toFixed(1)} kts</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8px] font-mono text-muted uppercase">Heading</span>
+            <span className="text-xs font-mono font-bold text-[#FFCC00]">{Math.round(selectedMaritime.heading || 0)}°</span>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="flex items-center gap-6">

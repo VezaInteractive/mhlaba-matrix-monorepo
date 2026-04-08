@@ -4,11 +4,63 @@ import { useEffect, useRef, useMemo, useState } from "react";
 import { useAppStore, POIs } from "@/store/useAppStore";
 import { useFlightTelemetry } from "@/hooks/useFlightTelemetry";
 import { useSatelliteTelemetry } from "@/hooks/useSatelliteTelemetry";
+import { useMaritimeTelemetry } from "@/hooks/useMaritimeTelemetry";
+import { useClimateTelemetry } from "@/hooks/useClimateTelemetry";
+import { useCyberIntel } from "@/hooks/useCyberIntel";
 import { CITY_INTEL } from "./HUD/RightPanel";
 
 type CesiumType = any; // We type it as any to avoid typescript errors since we uninstalled the module
 
+const CRT_SHADER = `
+uniform sampler2D colorTexture;
+in vec2 v_textureCoordinates;
+out vec4 fragColor;
+void main() {
+    vec4 color = texture(colorTexture, v_textureCoordinates);
+    float scanline = sin(v_textureCoordinates.y * 800.0) * 0.04;
+    color.r *= 0.8;
+    color.b *= 1.2;
+    color.g *= 1.1;
+    fragColor = vec4(color.rgb - scanline, 1.0);
+}
+`;
 
+const NVG_SHADER = `
+uniform sampler2D colorTexture;
+in vec2 v_textureCoordinates;
+out vec4 fragColor;
+float rand(vec2 co){
+    return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+void main() {
+    vec4 color = texture(colorTexture, v_textureCoordinates);
+    float luminance = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+    float noise = rand(v_textureCoordinates * 100.0) * 0.1;
+    vec3 nvgColor = vec3(0.1, 0.9, 0.2); 
+    fragColor = vec4(nvgColor * (luminance + noise), 1.0);
+}
+`;
+
+const THERMAL_SHADER = `
+uniform sampler2D colorTexture;
+in vec2 v_textureCoordinates;
+out vec4 fragColor;
+void main() {
+    vec4 color = texture(colorTexture, v_textureCoordinates);
+    float luminance = dot(color.rgb, vec3(0.299, 0.587, 0.114));
+    vec3 heat;
+    if (luminance < 0.25) {
+        heat = mix(vec3(0.0, 0.0, 1.0), vec3(0.0, 1.0, 1.0), luminance / 0.25);
+    } else if (luminance < 0.5) {
+        heat = mix(vec3(0.0, 1.0, 1.0), vec3(1.0, 1.0, 0.0), (luminance - 0.25) / 0.25);
+    } else if (luminance < 0.75) {
+        heat = mix(vec3(1.0, 1.0, 0.0), vec3(1.0, 0.0, 0.0), (luminance - 0.5) / 0.25);
+    } else {
+        heat = mix(vec3(1.0, 0.0, 0.0), vec3(1.0, 1.0, 1.0), (luminance - 0.75) / 0.25);
+    }
+    fragColor = vec4(heat, 1.0);
+}
+`;
 
 export default function MapViewer() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -18,8 +70,12 @@ export default function MapViewer() {
   const timeMultiplier = useAppStore((state) => state.timeMultiplier);
   const executeSearch = useAppStore((state) => state.executeSearch);
   const searchQuery = useAppStore((state) => state.searchQuery);
+  const visionMode = useAppStore((state) => state.visionMode);
   const flightTelemetry = useFlightTelemetry(layers.flights);
   const { telemetry: satTelemetry, orbitPrediction, requestOrbitPrediction } = useSatelliteTelemetry(layers.satellites);
+  const maritimeTelemetry = useMaritimeTelemetry(layers.maritime);
+  const climateTelemetry = useClimateTelemetry(layers.climate);
+  const cyberIntel = useCyberIntel(layers.cyber);
   
   const stageRef = useRef<CesiumType>(null);
   const flightsDataSourceRef = useRef<CesiumType>(null);
@@ -40,7 +96,7 @@ export default function MapViewer() {
   // Initialize Viewer
   useEffect(() => {
     // Wait for the window.Cesium object to load from script tags
-    const interval = setInterval(() => {
+    let interval = setInterval(() => {
       const Cesium = (window as any).Cesium;
       if (Cesium && containerRef.current && !viewerRef.current) {
         clearInterval(interval);
@@ -60,42 +116,40 @@ export default function MapViewer() {
           navigationHelpButton: false,
         });
 
-        // Suppress credit display. Guard with try-catch: Cesium's RAF loop can
-        // fire before creditContainer is ready on the very first render tick.
-        try {
-          viewer.cesiumWidget.creditContainer.style.display = "none";
-        } catch (_) { /* not fatal */ }
+        // Hide credit elements for tactical UI
+        viewer.cesiumWidget.creditContainer.style.display = "none";
 
-        // Add Google Photorealistic 3D Tileset.
-        // IMPORTANT: Guard every async callback — React Strict Mode destroys and
-        // recreates effects in dev, so the viewer may be gone by the time the
-        // Promise resolves. Calling viewer.scene on a destroyed viewer throws.
+        // Add Google Photorealistic 3D Tileset (Restores Joburg and Cape Town perfectly)
         Cesium.IonResource.fromAssetId(2275207)
           .then((resource: any) => {
-            if (viewerRef.current && !viewerRef.current.isDestroyed()) {
-              return Cesium.Cesium3DTileset.fromUrl(resource);
-            }
-            return null;
+            return Cesium.Cesium3DTileset.fromUrl(resource);
           })
           .then((tileset: any) => {
-            if (tileset && viewerRef.current && !viewerRef.current.isDestroyed()) {
-              viewerRef.current.scene.primitives.add(tileset);
-            }
+            viewer.scene.primitives.add(tileset);
           })
-          .catch((e: any) => console.warn('3D Tiles Err:', e));
+          .catch((e: any) => console.log('3D Tiles Err:', e));
 
         viewerRef.current = viewer;
 
         // Create data sources
         flightsDataSourceRef.current = new Cesium.CustomDataSource('flights');
         cctvDataSourceRef.current = new Cesium.CustomDataSource('cctv');
+        trafficDataSourceRef.current = new Cesium.CustomDataSource('traffic');
         satellitesDataSourceRef.current = new Cesium.CustomDataSource('satellites');
+        
+        maritimeDataSourceRef.current = new Cesium.CustomDataSource('maritime');
+        climateDataSourceRef.current = new Cesium.CustomDataSource('climate');
+        cyberDataSourceRef.current = new Cesium.CustomDataSource('cyber');
         businessesDataSourceRef.current = new Cesium.CustomDataSource('businesses');
         realEstateDataSourceRef.current = new Cesium.CustomDataSource('realEstate');
         
         viewer.dataSources.add(flightsDataSourceRef.current);
         viewer.dataSources.add(cctvDataSourceRef.current);
+        viewer.dataSources.add(trafficDataSourceRef.current);
         viewer.dataSources.add(satellitesDataSourceRef.current);
+        viewer.dataSources.add(maritimeDataSourceRef.current);
+        viewer.dataSources.add(climateDataSourceRef.current);
+        viewer.dataSources.add(cyberDataSourceRef.current);
         viewer.dataSources.add(businessesDataSourceRef.current);
         viewer.dataSources.add(realEstateDataSourceRef.current);
 
@@ -180,7 +234,7 @@ export default function MapViewer() {
     // Search Satellites
     if (!foundEntity && satellitesDataSourceRef.current) {
         const ents = satellitesDataSourceRef.current.entities.values;
-        for (const e of ents) {
+        for (let e of ents) {
             const name = e.properties.satName?.getValue()?.toUpperCase() || "";
             const id = e.properties.satId?.getValue()?.toString() || "";
             if (name.includes(query) || id.includes(query)) {
@@ -194,7 +248,7 @@ export default function MapViewer() {
     // Search Flights
     if (!foundEntity && flightsDataSourceRef.current) {
         const ents = flightsDataSourceRef.current.entities.values;
-        for (const e of ents) {
+        for (let e of ents) {
             const callsign = e.properties.callsign?.getValue()?.toUpperCase() || "";
             const id = e.properties.flightId?.getValue()?.toString() || "";
             if (callsign.includes(query) || id.includes(query)) {
@@ -229,7 +283,9 @@ export default function MapViewer() {
                   perigee: foundEntity.properties.perigee.getValue(),
                   inc: foundEntity.properties.inc.getValue()
                 });
+                useAppStore.getState().setSelectedFlight(null);
                 useAppStore.getState().setSelectedCCTV(null);
+                useAppStore.getState().setSelectedMaritime(null);
                 requestOrbitPrediction(parseInt(satId, 10));
             } else if (layerType === 'flight') {
                 useAppStore.getState().setSelectedFlight({
@@ -238,7 +294,9 @@ export default function MapViewer() {
                   alt: Math.round(foundEntity.properties.alt.getValue()),
                   mach: parseFloat(foundEntity.properties.mach.getValue())
                 });
+                useAppStore.getState().setSelectedCCTV(null);
                 useAppStore.getState().setSelectedSatellite(null);
+                useAppStore.getState().setSelectedMaritime(null);
             }
         }
     }
@@ -394,7 +452,7 @@ export default function MapViewer() {
     const processInteraction = (click: any) => {
       // 1. Standard precise pixel pick
       let pickedEntity: any = null;
-      const pickedObject = viewerRef.current.scene.pick(click.position);
+      let pickedObject = viewerRef.current.scene.pick(click.position);
       
       if (Cesium.defined(pickedObject) && pickedObject.id) {
           pickedEntity = pickedObject.id;
@@ -407,7 +465,7 @@ export default function MapViewer() {
           const searchLayer = (dataSource: any) => {
               if (!dataSource || !dataSource.entities) return;
               const ents = dataSource.entities.values;
-              for (const e of ents) {
+              for (let e of ents) {
                   if (e.position) {
                       const pos = e.position.getValue(viewerRef.current.clock.currentTime);
                       if (pos) {
@@ -427,6 +485,9 @@ export default function MapViewer() {
               }
           };
 
+          if (flightsDataSourceRef.current?.show) searchLayer(flightsDataSourceRef.current);
+          if (satellitesDataSourceRef.current?.show) searchLayer(satellitesDataSourceRef.current);
+          if (maritimeDataSourceRef.current?.show) searchLayer(maritimeDataSourceRef.current);
           if (realEstateDataSourceRef.current?.show) searchLayer(realEstateDataSourceRef.current);
           if (businessesDataSourceRef.current?.show) searchLayer(businessesDataSourceRef.current);
       }
@@ -460,6 +521,19 @@ export default function MapViewer() {
             alt: Math.round(parseFloat(extractVal("alt", 0))),
             mach: parseFloat(extractVal("mach", 0))
           });
+          useAppStore.getState().setSelectedCCTV(null);
+          useAppStore.getState().setSelectedSatellite(null);
+          useAppStore.getState().setSelectedMaritime(null);
+        } else if (entity.id?.startsWith("mmsi-")) {
+          useAppStore.getState().setSelectedMaritime({
+            id: extractVal("mmsi").toString() || extractVal("id", entity.id.replace("mmsi-", "")),
+            type: extractVal("vesselType").toString() || "CARGO",
+            speed: parseFloat(extractVal("speed", 0)),
+            heading: parseFloat(extractVal("heading", 0))
+          });
+          useAppStore.getState().setSelectedFlight(null);
+          useAppStore.getState().setSelectedCCTV(null);
+          useAppStore.getState().setSelectedSatellite(null);
         } else if (entity.id?.startsWith("sat-")) {
           const satId = extractVal("satId").toString() || entity.id.replace("sat-", "");
           useAppStore.getState().setSelectedSatellite({
@@ -469,7 +543,9 @@ export default function MapViewer() {
             perigee: parseFloat(extractVal("perigee", 0)),
             inc: parseFloat(extractVal("inc", 0))
           });
+          useAppStore.getState().setSelectedFlight(null);
           useAppStore.getState().setSelectedCCTV(null);
+          useAppStore.getState().setSelectedMaritime(null);
           requestOrbitPrediction(parseInt(satId, 10));
         } else if (entity.id?.startsWith("business_")) {
           // Trigger External Deployment (Direct Web Link)
@@ -568,6 +644,27 @@ export default function MapViewer() {
       } else if (currentCctvPos !== null) {
          useAppStore.getState().setCctvScreenPos(null);
       }
+
+      // 4. Maritime Screen Tracking
+      const selectedMaritime = useAppStore.getState().selectedMaritime;
+      let maritimePos = null;
+      if (selectedMaritime && maritimeDataSourceRef.current) {
+        const entity = maritimeDataSourceRef.current.entities.getById(`mmsi-${selectedMaritime.id}`);
+        if (entity && entity.position) {
+          const position = entity.position.getValue(viewerRef.current.clock.currentTime);
+          if (position) {
+            maritimePos = Cesium.SceneTransforms.worldToWindowCoordinates(viewerRef.current.scene, position);
+          }
+        }
+      }
+      const currentMaritimePos = useAppStore.getState().maritimeScreenPos;
+      if (maritimePos) {
+        if (!currentMaritimePos || Math.abs(currentMaritimePos.x - maritimePos.x) > 1 || Math.abs(currentMaritimePos.y - maritimePos.y) > 1) {
+             useAppStore.getState().setMaritimeScreenPos({ x: maritimePos.x, y: maritimePos.y });
+        }
+      } else if (currentMaritimePos !== null) {
+         useAppStore.getState().setMaritimeScreenPos(null);
+      }
     };
 
     viewerRef.current.scene.preRender.addEventListener(preRenderListener);
@@ -579,7 +676,65 @@ export default function MapViewer() {
     };
   }, [viewerReady]);
 
+  // Handle Traffic Layer via OpenStreetMap Real Vectors
+  useEffect(() => {
+    const Cesium = (window as any).Cesium;
+    if (layers.traffic && viewerRef.current && Cesium && trafficDataSourceRef.current) {
+      trafficDataSourceRef.current.show = true;
+      
+      const fetchTrafficVectors = async () => {
+        // Prevent refetching if already populated
+        if (trafficDataSourceRef.current.entities.values.length > 0) return;
 
+        try {
+          // Fetch real National highway topology via Overpass API (using LZ4 faster instance)
+          const overpassQuery = `[out:json][timeout:60];way["highway"="motorway"](-35.0,16.0,-22.0,33.0);out geom;`;
+          const res = await fetch(`https://lz4.overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`);
+          if (!res.ok) throw new Error("Overpass API failed");
+          const data = await res.json();
+          
+          if (data && data.elements) {
+            data.elements.forEach((way: any) => {
+              if (way.geometry && way.geometry.length > 1) {
+                const degreesArray = way.geometry.flatMap((pt: any) => [pt.lon, pt.lat]);
+                
+                // Deterministic mockup of traffic density using OpenStreetMap node ID modulo
+                const trafficDensity = way.id % 3;
+                let strokeColor = Cesium.Color.fromCssColorString("#00F0FF").withAlpha(0.7); // Light Flow (Cyan)
+                if (trafficDensity === 1) strokeColor = Cesium.Color.fromCssColorString("#FF0055").withAlpha(0.9); // Moderate Flow (Magenta)
+                else if (trafficDensity === 2) strokeColor = Cesium.Color.fromCssColorString("#9D00FF").withAlpha(1.0); // Congested Flow (Neon Purple)
+                
+                trafficDataSourceRef.current.entities.add({
+                  polyline: {
+                    positions: Cesium.Cartesian3.fromDegreesArray(degreesArray),
+                    width: trafficDensity === 2 ? 12 : 8,
+                    material: new Cesium.PolylineDashMaterialProperty({
+                      color: new Cesium.CallbackProperty((time: any) => {
+                         const seconds = Cesium.JulianDate.toDate(time).getTime() / 1000.0;
+                         // Pulse effect varying slightly by highway density
+                         const pulse = 0.6 + 0.4 * Math.sin(seconds * (3.0 + trafficDensity * 1.5) + way.id);
+                         return strokeColor.withAlpha(pulse);
+                      }, false),
+                      gapColor: Cesium.Color.TRANSPARENT,
+                      dashLength: 40.0 + trafficDensity * 20.0,
+                      dashPattern: 255.0
+                    }),
+                    clampToGround: true // Ensures it maps perfectly over the 3D tiles terrain
+                  }
+                });
+              }
+            });
+          }
+        } catch (e) {
+          console.error("Traffic vector fetch failed:", e);
+        }
+      };
+      
+      fetchTrafficVectors();
+    } else if (trafficDataSourceRef.current) {
+      trafficDataSourceRef.current.show = false;
+    }
+  }, [layers.traffic]);
 
   // Handle Live Flights using Telemetry Worker Pipeline
   useEffect(() => {
@@ -831,7 +986,7 @@ export default function MapViewer() {
     if (!Cesium || !viewerRef.current) return;
 
     const entityId = `orbit-pred-ring`;
-    const predEntity = viewerRef.current.entities.getById(entityId);
+    let predEntity = viewerRef.current.entities.getById(entityId);
 
     // If there is no active orbit prediction, or we clicked off the satellite, remove the ring entirely
     if (!orbitPrediction || !selectedSatellite || orbitPrediction.noradId.toString() !== selectedSatellite.id) {
@@ -859,7 +1014,226 @@ export default function MapViewer() {
     }
   }, [orbitPrediction, selectedSatellite]);
 
+  // Handle Vision Modes (Post Process)
+  useEffect(() => {
+    const Cesium = (window as any).Cesium;
+    if (!viewerRef.current || !Cesium) return;
 
+    const scene = viewerRef.current.scene;
+
+    if (stageRef.current) {
+      scene.postProcessStages.remove(stageRef.current);
+      stageRef.current = null;
+    }
+
+    if (visionMode === "NORMAL") return;
+
+    let fragmentShader = "";
+    if (visionMode === "NVG") fragmentShader = NVG_SHADER;
+    else if (visionMode === "THERMAL") fragmentShader = THERMAL_SHADER;
+    else if (visionMode === "CRT") fragmentShader = CRT_SHADER;
+
+    if (fragmentShader) {
+      stageRef.current = new Cesium.PostProcessStage({
+        fragmentShader,
+      });
+      scene.postProcessStages.add(stageRef.current);
+    }
+  }, [visionMode]);
+
+  // Handle Maritime Layer (Ocean Traffic)
+  useEffect(() => {
+    const Cesium = (window as any).Cesium;
+    if (!Cesium || !maritimeDataSourceRef.current) return;
+    
+    maritimeDataSourceRef.current.show = layers.maritime;
+    if (!maritimeTelemetry) return;
+
+    const entities = maritimeDataSourceRef.current.entities;
+    const { buffer, timestamp } = maritimeTelemetry;
+    const STRIDE = 7;
+    const count = buffer.length / STRIDE;
+    const time = Cesium.JulianDate.fromDate(new Date(timestamp * 1000));
+    
+    entities.suspendEvents();
+
+    for (let i = 0; i < count; i++) {
+        const offset = i * STRIDE;
+        const idInt = buffer[offset + 0];
+        const stringId = `mmsi-${idInt}`;
+        const lng = buffer[offset + 1];
+        const lat = buffer[offset + 2];
+        const heading = buffer[offset + 4];
+        
+        // Extract 24-bit RGB color from the Float32Array
+        const colorValue = buffer[offset + 6] || 0x00FFFF;
+        const colorHex = '#' + Math.floor(colorValue).toString(16).padStart(6, '0');
+        const SHIP_SVG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="${colorHex}" width="64" height="64"><path stroke="#000000" stroke-width="12" d="M256 0l256 512-256-128-256 128z"/></svg>`);
+        
+        const position = Cesium.Cartesian3.fromDegrees(lng, lat, 0);
+        let entity = entities.getById(stringId);
+
+        if (!entity) {
+          const positionProperty = new Cesium.SampledPositionProperty();
+          positionProperty.setInterpolationOptions({
+            interpolationDegree: 2,
+            interpolationAlgorithm: Cesium.LinearApproximation
+          });
+          positionProperty.forwardExtrapolationType = Cesium.ExtrapolationType.EXTRAPOLATE;
+          positionProperty.forwardExtrapolationDuration = 30;
+
+          entity = entities.add({
+            id: stringId,
+            position: positionProperty,
+            billboard: {
+              image: SHIP_SVG,
+              scaleByDistance: new Cesium.NearFarScalar(2000.0, 0.4, 8000000.0, 0.15),
+              rotation: -Cesium.Math.toRadians(heading || 0)
+            },
+            point: {
+              pixelSize: 40,
+              color: new Cesium.Color(0,0,0,0.01)
+            },
+            path: {
+              resolution: 5,
+              leadTime: 0,
+              trailTime: 1200, // Very long wake for ships
+              width: 8,
+              material: new Cesium.PolylineGlowMaterialProperty({
+                  glowPower: 0.15,
+                  taperPower: 1,
+                  color: Cesium.Color.fromCssColorString(colorHex).withAlpha(0.2)
+              }),
+              distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, Number.POSITIVE_INFINITY)
+            }
+          });
+        }
+        
+        if (!entity.properties) entity.properties = new Cesium.PropertyBag();
+        if (!entity.properties.hasProperty('mmsi')) {
+            entity.properties.addProperty('mmsi', idInt);
+            entity.properties.addProperty('vesselType', "CARGO"); // Default fallback
+            entity.properties.addProperty('speed', 12.5); // Default fallback
+            entity.properties.addProperty('heading', heading || 0);
+        } else {
+            const currentHeading = entity.properties.heading.getValue();
+            if (currentHeading !== (heading || 0)) {
+                entity.properties.heading.setValue(heading || 0);
+            }
+        }
+
+        if (entity.billboard) {
+            entity.billboard.rotation = -Cesium.Math.toRadians(heading || 0);
+        }
+        entity.position.addSample(time, position);
+    }
+    
+    entities.resumeEvents();
+  }, [maritimeTelemetry, layers.maritime]);
+
+  // Handle Climate Engine (Wind Vectors)
+  useEffect(() => {
+    const Cesium = (window as any).Cesium;
+    if (!Cesium || !climateDataSourceRef.current) return;
+    
+    climateDataSourceRef.current.show = layers.climate;
+    if (!layers.climate || !climateTelemetry) return;
+
+    const entities = climateDataSourceRef.current.entities;
+    const { buffer } = climateTelemetry;
+    const STRIDE = 5;
+    const count = buffer.length / STRIDE;
+    
+    entities.suspendEvents();
+
+    for (let i = 0; i < count; i++) {
+        const offset = i * STRIDE;
+        const idInt = buffer[offset + 0];
+        const stringId = `wind-${idInt}`;
+        const lng = buffer[offset + 1];
+        const lat = buffer[offset + 2];
+        const intensity = buffer[offset + 3];
+        const heading = buffer[offset + 4];
+        
+        // Intensity drives dynamic color (Deep Purple to Blazing Cyan)
+        let colorHex = '#9D00FF'; // Slow: Deep Purple
+        if (intensity > 6) colorHex = '#00F0FF'; // High: Blazing Cyan
+        else if (intensity > 3) colorHex = '#FF0055'; // Medium: Magenta
+        
+        const glowColor = Cesium.Color.fromCssColorString(colorHex).withAlpha(0.3 + (intensity * 0.05));
+        const position = Cesium.Cartesian3.fromDegrees(lng, lat, 1000 + intensity * 500); 
+        
+        // Extended tail for faster wind
+        const tailMult = 0.05 + (intensity * 0.02);
+        const tailLng = lng - (Math.sin(heading * Math.PI / 180) * tailMult);
+        const tailLat = lat - (Math.cos(heading * Math.PI / 180) * tailMult);
+        const tailPos = Cesium.Cartesian3.fromDegrees(tailLng, tailLat, 1000 + intensity * 500);
+        
+        let entity = entities.getById(stringId);
+
+        if (!entity) {
+          entity = entities.add({
+            id: stringId,
+            polyline: {
+              positions: [tailPos, position],
+              width: 3 + intensity,
+              material: new Cesium.PolylineGlowMaterialProperty({
+                  glowPower: 0.2,
+                  taperPower: 1.0, // Creates a comet-like comet tail
+                  color: glowColor
+              })
+            }
+          });
+        } else {
+            entity.polyline.positions = [tailPos, position];
+            (entity.polyline.material as any).color = glowColor;
+            entity.polyline.width = 3 + intensity;
+        }
+    }
+    entities.resumeEvents();
+  }, [climateTelemetry, layers.climate]);
+
+  // Handle Cyber Intel Layer (Ballistic Arcs)
+  useEffect(() => {
+    const Cesium = (window as any).Cesium;
+    if (!Cesium || !cyberDataSourceRef.current) return;
+    
+    cyberDataSourceRef.current.show = layers.cyber;
+    if (!layers.cyber) return;
+
+    const entities = cyberDataSourceRef.current.entities;
+    const activeIds = new Set(cyberIntel.map(a => a.id));
+
+    // Cleanup faded attacks
+    entities.values.forEach((entity: any) => {
+      if (!activeIds.has(entity.id)) entities.remove(entity);
+    });
+
+    cyberIntel.forEach(attack => {
+      if (!entities.getById(attack.id)) {
+          const colorHex = attack.severity === 2 ? '#FF0000' : (attack.severity === 1 ? '#FF0055' : '#9D00FF');
+          const cesiumColor = Cesium.Color.fromCssColorString(colorHex);
+          
+          const start = Cesium.Cartesian3.fromDegrees(attack.sourceLng, attack.sourceLat, 0);
+          const end = Cesium.Cartesian3.fromDegrees(attack.targetLng, attack.targetLat, 0);
+          
+          entities.add({
+            id: attack.id,
+            polyline: {
+                positions: [start, end],
+                arcType: Cesium.ArcType.GEODESIC,
+                width: 5,
+                material: new Cesium.PolylineDashMaterialProperty({
+                    color: cesiumColor,
+                    dashLength: 400000.0, 
+                    dashPattern: 255.0
+                })
+            }
+          });
+      }
+    });
+
+  }, [cyberIntel, layers.cyber]);
 
   return <div ref={containerRef} className="absolute inset-0 z-0 bg-[#0b0f19]" />;
 }

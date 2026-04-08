@@ -5,7 +5,7 @@ import RightPanel from "./RightPanel";
 import BottomDock from "./BottomDock";
 import FlightTargetingHUD from "./FlightTargetingHUD";
 import SatelliteTargetingHUD from "./SatelliteTargetingHUD";
-
+import MaritimeTargetingHUD from "./MaritimeTargetingHUD";
 import RealEstateModal from "./RealEstateModal";
 
 export default function MainHUD() {
@@ -28,6 +28,7 @@ export default function MainHUD() {
 
       <FlightTargetingHUD />
       <SatelliteTargetingHUD />
+      <MaritimeTargetingHUD />
       
       {/* Overlays / Modals */}
       <RealEstateModal />

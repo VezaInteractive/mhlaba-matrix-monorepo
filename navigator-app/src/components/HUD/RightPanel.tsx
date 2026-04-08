@@ -1,9 +1,50 @@
 "use client";
 
-import { useAppStore } from "@/store/useAppStore";
-import { Eye, Building2, Globe, Phone, X } from "lucide-react";
+import { useAppStore, VisionMode } from "@/store/useAppStore";
+import { Eye, Moon, Flame, MonitorPlay, Building2, Globe, Phone, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMemo } from 'react';
+
+const ShaderCard = ({
+  icon: Icon,
+  mode,
+  currentMode,
+  setMode,
+  hoverColorClass,
+}: {
+  icon: any;
+  mode: VisionMode;
+  currentMode: VisionMode;
+  setMode: (mode: VisionMode) => void;
+  hoverColorClass: string;
+}) => {
+  const isActive = currentMode === mode;
+  return (
+    <button
+      onClick={() => setMode(mode)}
+      className={cn(
+        "w-full aspect-square bg-surface border flex flex-col items-center justify-center gap-3 transition-all duration-300 rounded-md group",
+        isActive ? "border-active shadow-neon bg-primary/10" : "border-glass hover:scale-105",
+        !isActive && hoverColorClass
+      )}
+    >
+      <Icon
+        className={cn(
+          "w-8 h-8 transition-colors duration-300",
+          isActive ? "text-primary" : "text-muted group-hover:text-primary"
+        )}
+      />
+      <span
+        className={cn(
+          "font-body text-xs uppercase tracking-widest font-semibold",
+          isActive ? "text-primary" : "text-muted group-hover:text-text"
+        )}
+      >
+        {mode}
+      </span>
+    </button>
+  );
+};
 
 interface CommercialProfile {
   companyName: string;
@@ -71,7 +112,7 @@ export const CITY_INTEL: Record<string, CityProfile> = {
 };
 
 export default function RightPanel() {
-  const { selectedSatellite, selectedFlight, activePOI, activeContinent, setActiveContinent, showAdModal, setShowAdModal } = useAppStore();
+  const { visionMode, setVisionMode, selectedSatellite, selectedFlight, selectedMaritime, activePOI, activeContinent, setActiveContinent, showAdModal, setShowAdModal } = useAppStore();
 
   const selectedCity = activePOI && CITY_INTEL[activePOI] ? CITY_INTEL[activePOI] : null;
 
@@ -93,13 +134,13 @@ export default function RightPanel() {
             <h2 className="font-display font-bold text-lg uppercase tracking-widest text-[#00FF00]">
               ASSET DOSSIER
             </h2>
-            {(!selectedSatellite && !selectedFlight) && (
+            {(!selectedSatellite && !selectedFlight && !selectedMaritime) && (
               <span className="text-[9px] font-mono text-[#FF0055] animate-pulse">NO_LINK</span>
             )}
           </div>
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden relative z-10 no-scrollbar">
-            {!selectedSatellite && !selectedFlight && !selectedCity ? (
+            {!selectedSatellite && !selectedFlight && !selectedMaritime && !selectedCity ? (
               <div className="flex flex-col items-center justify-center h-full text-center opacity-40">
                 <Eye className="w-12 h-12 mb-3 text-white/30" />
                 <p className="font-mono text-xs tracking-widest uppercase">Awaiting Selection</p>
@@ -161,6 +202,27 @@ export default function RightPanel() {
                   </>
                 )}
 
+                {/* MARITIME DOSSIER */}
+                {selectedMaritime && (
+                  <>
+                    <div className="flex flex-col gap-1 border-l-2 border-[#00F0FF] pl-3 py-1">
+                      <span className="text-[10px] font-mono text-[#00F0FF]/70 tracking-widest">CLAS: NAVAL</span>
+                      <span className="font-display font-bold text-xl uppercase truncate">MMSI: {selectedMaritime.id}</span>
+                      <span className="font-mono text-xs">TYPE: {selectedMaritime.type}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 mt-4">
+                      <div className="bg-black/40 border border-white/5 rounded p-2 flex flex-col">
+                        <span className="text-[9px] font-mono text-muted">SPEED</span>
+                        <span className="font-mono text-[#00FF00] font-bold">{selectedMaritime.speed.toFixed(1)} KTS</span>
+                      </div>
+                      <div className="bg-black/40 border border-white/5 rounded p-2 flex flex-col">
+                        <span className="text-[9px] font-mono text-muted">HEADING</span>
+                        <span className="font-mono text-[#00FF00] font-bold">{selectedMaritime.heading.toFixed(1)}°</span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* CITY DOSSIER */}
                 {selectedCity && (
@@ -240,7 +302,45 @@ export default function RightPanel() {
           </div>
         </div>
 
+        {/* Mini Shader / Vision Toggles */}
+        <div className="bg-[#0b0f19] shadow-2xl border border-white/10 rounded-lg w-full p-4 flex flex-col gap-3 mb-0">
+          <div className="border-b border-glass pb-1">
+            <h2 className="font-display font-bold text-xs uppercase tracking-widest text-text">
+              OPTICAL FILTER
+            </h2>
+          </div>
 
+          <div className="grid grid-cols-4 gap-2">
+            <ShaderCard
+              icon={Eye}
+              mode="NORMAL"
+              currentMode={visionMode}
+              setMode={setVisionMode}
+              hoverColorClass="hover:border-white/50"
+            />
+            <ShaderCard
+              icon={Moon}
+              mode="NVG"
+              currentMode={visionMode}
+              setMode={setVisionMode}
+              hoverColorClass="hover:border-green-500/50 hover:bg-green-500/5"
+            />
+            <ShaderCard
+              icon={Flame}
+              mode="THERMAL"
+              currentMode={visionMode}
+              setMode={setVisionMode}
+              hoverColorClass="hover:border-orange-500/50 hover:bg-orange-500/5"
+            />
+            <ShaderCard
+              icon={MonitorPlay}
+              mode="CRT"
+              currentMode={visionMode}
+              setMode={setVisionMode}
+              hoverColorClass="hover:border-cyan-500/50 hover:bg-cyan-500/5"
+            />
+          </div>
+        </div>
       </div>
 
       {/* COMMERCIAL AD-TECH MODAL */}
