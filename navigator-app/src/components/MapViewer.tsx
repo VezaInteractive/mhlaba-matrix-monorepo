@@ -60,8 +60,11 @@ export default function MapViewer() {
           navigationHelpButton: false,
         });
 
-        // Hide credit elements for tactical UI
-        viewer.cesiumWidget.creditContainer.style.display = "none";
+        // Suppress credit display. Guard with try-catch: Cesium's RAF loop can
+        // fire before creditContainer is ready on the very first render tick.
+        try {
+          viewer.cesiumWidget.creditContainer.style.display = "none";
+        } catch (_) { /* not fatal */ }
 
         // Add Google Photorealistic 3D Tileset.
         // IMPORTANT: Guard every async callback — React Strict Mode destroys and
@@ -86,6 +89,7 @@ export default function MapViewer() {
         // Create data sources
         flightsDataSourceRef.current = new Cesium.CustomDataSource('flights');
         cctvDataSourceRef.current = new Cesium.CustomDataSource('cctv');
+        satellitesDataSourceRef.current = new Cesium.CustomDataSource('satellites');
         businessesDataSourceRef.current = new Cesium.CustomDataSource('businesses');
         realEstateDataSourceRef.current = new Cesium.CustomDataSource('realEstate');
         
