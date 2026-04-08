@@ -1,0 +1,234 @@
+# Sleek Glassmorphism HUD
+
+## Product Overview
+
+**The Pitch:** An edge-to-edge spatial interface overlay that frames a central WebGL environment. It delivers tactical data and shader controls through ultra-sleek, frosted-glass panels without obstructing the visual core.
+
+**For:** GIS operators and spatial data analysts who need rapid access to multi-layered telemetry without losing context of the primary 3D map.
+
+**Device:** desktop
+
+**Design Direction:** Tactical glassmorphism. Heavy use of `backdrop-filter: blur`, ultra-thin semi-transparent borders, and striking neon accents against deep obsidian translucency. 
+
+**Inspired by:** Palantir Gotham, The Division HUD
+
+---
+
+## Screens
+
+- **Main HUD:** Default edge-to-edge overlay with collapsed side and bottom panels
+- **Layer Control Matrix:** Expanded left panel for detailed telemetry data streams
+- **Vision Modes:** Expanded right panel for active shader fine-tuning
+- **POI Command:** Expanded bottom dock for rapid geographical jumping
+
+---
+
+## Key Flows
+
+**Data Layer Activation:** Toggling real-time telemetry
+
+1. User is on Main HUD -> sees collapsed Left Panel
+2. User clicks **Live Flights** -> panel expands, toggles on, initiates data stream
+3. Left Panel displays active flight metrics, central WebGL updates
+
+**Atmospheric Shift:** Applying a new visual shader
+
+1. User is on Main HUD -> sees Right Panel
+2. User clicks **NVG** toggle -> Right panel shifts to green accent state
+3. WebGL canvas instantly transitions to Night Vision filter
+
+**Rapid Relocation:** Jumping to a new geographic zone
+
+1. User is on Main HUD -> sees Bottom Panel
+2. User clicks **Cape Town** -> Bottom panel highlights selection
+3. Camera in WebGL sweeps to new POI
+
+---
+
+<details>
+<summary>Design System</summary>
+
+## Color Palette
+
+- **Primary:** `#00F0FF` - Active states, indicators, critical CTAs (Neon Cyan)
+- **Background:** `rgba(11, 15, 25, 0.45)` - Main panel backgrounds (Obsidian Glass)
+- **Surface:** `rgba(255, 255, 255, 0.05)` - Inner cards, inactive buttons
+- **Text:** `#E0E7FF` - Primary readouts, body copy
+- **Muted:** `rgba(224, 231, 255, 0.4)` - Borders, labels, secondary text
+- **Accent:** `#FF0055` - Errors, CRT glitches, destructive actions
+
+## Typography
+
+- **Headings:** `Space Grotesk`, 700, 18-24px, uppercase, 2px letter-spacing
+- **Body:** `Manrope`, 400, 14px
+- **Small text:** `Manrope`, 500, 11px, uppercase, 1.5px letter-spacing
+- **Data Values:** `JetBrains Mono`, 400, 16px (for coordinates, timestamps)
+
+**Style notes:** Minimum 16px backdrop blur on all panels. 1px inner borders with linear gradients (white 20% to transparent) to simulate glass edges. No heavy drop shadows; rely on ambient light diffusion.
+
+## Design Tokens
+
+```css
+:root {
+  --color-primary: #00F0FF;
+  --color-background: rgba(11, 15, 25, 0.45);
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --color-text: #E0E7FF;
+  --color-muted: rgba(224, 231, 255, 0.4);
+  --color-accent: #FF0055;
+  
+  --font-display: 'Space Grotesk', sans-serif;
+  --font-body: 'Manrope', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --blur-heavy: blur(24px);
+  --blur-medium: blur(12px);
+  
+  --border-glass: 1px solid rgba(255, 255, 255, 0.1);
+  --border-active: 1px solid #00F0FF;
+  
+  --radius-lg: 16px;
+  --radius-md: 8px;
+  --radius-sm: 4px;
+}
+```
+
+</details>
+
+---
+
+<details>
+<summary>Screen Specifications</summary>
+
+### Main HUD
+
+**Purpose:** Base layer providing edge-to-edge interface framing the transparent center.
+
+**Layout:** 320px Left Panel, 320px Right Panel, 120px Bottom Dock, 100% transparent center.
+
+**Key Elements:**
+- **Central Void:** `pointer-events: none`, absolute center, 100% transparent
+- **Left Panel (Data):** Fixed to left, `h-[calc(100vh-160px)]`, 320px wide, 24px margin
+- **Right Panel (Shaders):** Fixed to right, `h-[calc(100vh-160px)]`, 320px wide, 24px margin
+- **Bottom Dock (Locations):** Fixed to bottom, 80px high, 60% width, centered, 24px margin
+
+**States:**
+- **Empty:** N/A (Always shows base controls)
+- **Loading:** Pulsing neon cyan skeleton loaders over glass panels
+- **Error:** Accent red borders, `GLITCH_REBOOT` text via JetBrains Mono
+
+**Components:**
+- **Panel Base:** `bg-background`, `backdrop-blur-heavy`, `border-glass`, `rounded-lg`
+
+**Interactions:**
+- **Hover Panel:** Border opacity increases to `rgba(255, 255, 255, 0.25)`, 300ms ease
+
+**Responsive:**
+- **Desktop:** 100vw x 100vh absolute fill
+- **Tablet:** N/A (Desktop strictly required)
+- **Mobile:** N/A
+
+### Layer Control Matrix (Left Panel)
+
+**Purpose:** Toggle and monitor incoming data streams.
+
+**Layout:** Vertical flex column, 16px gap, sticky header.
+
+**Key Elements:**
+- **Header:** "DATA LAYERS", Space Grotesk 18px, 1px bottom border
+- **CCTV Toggle:** 48px height card, icon + text, binary toggle switch
+- **Live Flights Toggle:** 48px height card, flight count indicator (`JetBrains Mono`)
+- **Satellites Toggle:** 48px height card, orbital status text
+- **Joburg Traffic Toggle:** 48px height card, congestion hex code readout
+
+**States:**
+- **Empty:** All toggles off, surface cards at 5% opacity
+- **Loading:** Spinning cyan dash array on toggle action
+- **Error:** Red dashed border, "SIGNAL LOST" text
+
+**Components:**
+- **Toggle Card:** `h-12`, `bg-surface`, `rounded-md`, `flex justify-between items-center px-4`
+- **Active State:** `border-active`, text glows `#00F0FF`, 10% primary background
+
+**Interactions:**
+- **Click Toggle:** Smooth fill transition left-to-right (`bg-primary` 10%), toggle slides right
+- **Hover Card:** `bg-surface` shifts from 5% to 10% opacity
+
+**Responsive:**
+- **Desktop:** Fixed 320px width
+- **Tablet/Mobile:** N/A
+
+### Vision Modes (Right Panel)
+
+**Purpose:** Instant WebGL shader switching.
+
+**Layout:** 2x2 grid of 120px square cards.
+
+**Key Elements:**
+- **Header:** "ACTIVE STYLE", Space Grotesk 18px, 1px bottom border
+- **Normal Card:** Top-left, clear icon
+- **NVG Card:** Top-right, night-vision icon, green tint on hover
+- **Thermal Card:** Bottom-left, heat-map icon, orange tint on hover
+- **CRT Card:** Bottom-right, scanline icon, cyan glitch on hover
+
+**States:**
+- **Empty:** Normal mode active by default
+- **Loading:** Instantaneous switch (no loading)
+- **Error:** Reverts to Normal, flashes Accent color
+
+**Components:**
+- **Shader Card:** `w-full aspect-square`, `bg-surface`, `border-glass`, `flex flex-col items-center justify-center gap-2`
+- **Active Shader:** 1px solid primary border, inset shadow `0 0 20px rgba(0, 240, 255, 0.2)`
+
+**Interactions:**
+- **Click Card:** Replaces active state, triggers WebGL uniform update event
+- **Hover Card:** Slight scale up (`scale-105`), 150ms ease-out, icon glows
+
+**Responsive:**
+- **Desktop:** Fixed 320px width
+- **Tablet/Mobile:** N/A
+
+### POI Command (Bottom Dock)
+
+**Purpose:** Geographic jumps and macro navigation.
+
+**Layout:** Horizontal flex row, centered, 24px gap.
+
+**Key Elements:**
+- **Location Pills:** 5 distinct location buttons (e.g., Joburg, Cape Town, Pretoria, Durban, HQ)
+- **Coordinate Display:** Floating `JetBrains Mono` readout attached to active pill
+- **Map Reset:** Small circular button on far right
+
+**States:**
+- **Empty:** Default location active
+- **Loading:** Horizontal indeterminate progress bar on bottom edge
+- **Error:** N/A
+
+**Components:**
+- **Location Pill:** `px-6 py-2`, `rounded-full`, `bg-surface`, `border-glass`, `text-[12px] uppercase`
+
+**Interactions:**
+- **Click Pill:** Background becomes `bg-primary`, text becomes black, coordinates update
+- **Hover Pill:** Border becomes `border-active`
+
+**Responsive:**
+- **Desktop:** Max-width 800px, dynamically centers
+- **Tablet/Mobile:** N/A
+
+</details>
+
+---
+
+<details>
+<summary>Build Guide</summary>
+
+**Stack:** React + Tailwind CSS v3 + Framer Motion (for layout transitions)
+
+**Build Order:**
+1. **Main HUD Base:** Set up the 100vw/vh absolute wrapper with `pointer-events-none` center to ensure WebGL passthrough works immediately.
+2. **Design Tokens:** Configure `tailwind.config.js` with specific RGBA glass values, custom fonts (Space Grotesk, Manrope), and exact blur utilities.
+3. **Layer Control Matrix (Left):** Build the glass cards and toggle logic. Establishes the standard interactive element styling.
+4. **Vision Modes (Right):** Implement the 2x2 grid. Add hover glow effects.
+5. **POI Command (Bottom):** Build the horizontal scroll/flex layout and active pill states.
+
+</details>

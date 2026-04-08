@@ -1,0 +1,43 @@
+@import "tailwindcss";
+@source "../../src";
+
+@theme {
+  --color-primary: #00F0FF;
+  --color-hud-background: rgba(11, 15, 25, 0.45);
+  --color-surface: rgba(255, 255, 255, 0.05);
+  --color-text: #E0E7FF;
+  --color-muted: rgba(224, 231, 255, 0.4);
+  --color-accent: #FF0055;
+
+  --font-display: var(--font-space-grotesk), sans-serif;
+  --font-body: var(--font-manrope), sans-serif;
+  --font-mono: var(--font-jetbrains-mono), monospace;
+}
+
+@layer base {
+  body {
+    background-color: #000;
+  }
+}
+
+@utility backdrop-blur-heavy {
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+}
+
+@utility backdrop-blur-medium {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@utility border-glass {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+@utility border-active {
+  border: 1px solid #00F0FF;
+}
+
+@utility shadow-neon {
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.2);
+}

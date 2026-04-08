@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Main HUD</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&amp;family=Space+Grotesk:wght@700&amp;family=JetBrains+Mono:wght@400&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0de3f2",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#102122",
+                        "hud-bg": "rgba(11, 15, 25, 0.45)",
+                        "hud-surface": "rgba(255, 255, 255, 0.05)",
+                        "hud-text": "#E0E7FF",
+                        "hud-muted": "rgba(224, 231, 255, 0.4)",
+                        "hud-accent": "#FF0055",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "grotesk": ["Space Grotesk", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "full": "9999px"},
+                    backdropBlur: {
+                        'heavy': '24px',
+                        'medium': '16px',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body {
+            font-family: 'Manrope', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            background-color: #050505; /* Simulate underlying map dark space */
+            background-image: radial-gradient(circle at center, #112233 0%, #000000 100%); /* Placeholder map bg */
+        }
+        
+        .glass-panel {
+            background-color: rgba(11, 15, 25, 0.45);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: border-color 0.3s ease;
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+
+        .glass-card:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .glass-card.active {
+            border-color: #0de3f2;
+            box-shadow: inset 0 0 20px rgba(13, 227, 242, 0.2);
+            background-color: rgba(13, 227, 242, 0.1);
+        }
+
+        /* Custom Scrollbar for panels if needed */
+        ::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-hud-text h-screen w-screen relative flex flex-col justify-between p-6 pointer-events-none">
+<!-- TOP ROW: Left & Right Panels -->
+<div class="flex justify-between items-start w-full h-[calc(100vh-160px)] pointer-events-none">
+<!-- LEFT PANEL: Layer Control Matrix -->
+<div class="glass-panel w-[320px] h-full rounded-lg flex flex-col pointer-events-auto overflow-hidden">
+<div class="p-5 border-b border-white/10 shrink-0">
+<h2 class="font-grotesk font-bold text-lg tracking-[2px] uppercase text-white">DATA LAYERS</h2>
+</div>
+<div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+<!-- Toggle: CCTV -->
+<button class="glass-card h-12 rounded-md flex justify-between items-center px-4 w-full group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-hud-muted group-hover:text-white transition-colors">videocam</span>
+<span class="text-sm font-medium">CCTV Feeds</span>
+</div>
+<div class="w-8 h-4 rounded-full bg-white/10 relative">
+<div class="w-4 h-4 rounded-full bg-hud-muted absolute left-0 top-0 transition-transform"></div>
+</div>
+</button>
+<!-- Toggle: Live Flights (Active) -->
+<button class="glass-card active h-12 rounded-md flex justify-between items-center px-4 w-full group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary">flight</span>
+<span class="text-sm font-medium text-primary shadow-primary">Live Flights</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-primary">24 Active</span>
+<div class="w-8 h-4 rounded-full bg-primary/20 relative">
+<div class="w-4 h-4 rounded-full bg-primary absolute right-0 top-0 transition-transform shadow-[0_0_10px_#0de3f2]"></div>
+</div>
+</div>
+</button>
+<!-- Toggle: Satellites -->
+<button class="glass-card h-12 rounded-md flex justify-between items-center px-4 w-full group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-hud-muted group-hover:text-white transition-colors">satellite</span>
+<span class="text-sm font-medium">Satellites</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-hud-muted">Nominal</span>
+<div class="w-8 h-4 rounded-full bg-white/10 relative">
+<div class="w-4 h-4 rounded-full bg-hud-muted absolute left-0 top-0 transition-transform"></div>
+</div>
+</div>
+</button>
+<!-- Toggle: Traffic -->
+<button class="glass-card h-12 rounded-md flex justify-between items-center px-4 w-full group">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-hud-muted group-hover:text-white transition-colors">traffic</span>
+<span class="text-sm font-medium">Joburg Traffic</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-[#FF0055]">High</span>
+<div class="w-8 h-4 rounded-full bg-white/10 relative">
+<div class="w-4 h-4 rounded-full bg-hud-muted absolute left-0 top-0 transition-transform"></div>
+</div>
+</div>
+</button>
+<!-- Map Controls Shared Component (Embedded in left panel for context) -->
+<div class="mt-auto pt-6">
+<div class="glass-card rounded-xl p-4 flex flex-col gap-3">
+<label class="flex flex-col h-10 w-full">
+<div class="flex w-full items-center rounded-lg h-full bg-white/5 border border-white/10 px-3 focus-within:border-primary transition-colors">
+<span class="material-symbols-outlined text-hud-muted text-[20px]">search</span>
+<input class="w-full bg-transparent border-none text-white text-sm focus:ring-0 placeholder:text-hud-muted ml-2" placeholder="Search coordinates..." value=""/>
+</div>
+</label>
+<div class="flex justify-between items-center">
+<div class="flex bg-white/5 rounded-lg border border-white/10 overflow-hidden">
+<button class="w-10 h-10 flex items-center justify-center hover:bg-white/10 transition-colors border-r border-white/10">
+<span class="material-symbols-outlined text-white text-[20px]">add</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-white text-[20px]">remove</span>
+</button>
+</div>
+<button class="w-10 h-10 flex items-center justify-center bg-white/5 rounded-lg border border-white/10 hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-white text-[20px]">near_me</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT PANEL: Vision Modes -->
+<div class="glass-panel w-[320px] h-auto rounded-lg flex flex-col pointer-events-auto">
+<div class="p-5 border-b border-white/10 shrink-0">
+<h2 class="font-grotesk font-bold text-lg tracking-[2px] uppercase text-white">ACTIVE STYLE</h2>
+</div>
+<div class="p-5 grid grid-cols-2 gap-4">
+<!-- Normal Mode -->
+<button class="glass-card active aspect-square rounded-md flex flex-col items-center justify-center gap-3 hover:scale-105 transition-transform duration-150">
+<span class="material-symbols-outlined text-[32px] text-primary">visibility</span>
+<span class="text-[11px] font-medium uppercase tracking-[1.5px] text-primary">Normal</span>
+</button>
+<!-- NVG Mode -->
+<button class="glass-card aspect-square rounded-md flex flex-col items-center justify-center gap-3 hover:scale-105 transition-transform duration-150 hover:text-green-400 group">
+<span class="material-symbols-outlined text-[32px] text-hud-muted group-hover:text-green-400 transition-colors">night_sight_max</span>
+<span class="text-[11px] font-medium uppercase tracking-[1.5px] text-hud-muted group-hover:text-green-400 transition-colors">NVG</span>
+</button>
+<!-- Thermal Mode -->
+<button class="glass-card aspect-square rounded-md flex flex-col items-center justify-center gap-3 hover:scale-105 transition-transform duration-150 hover:text-orange-400 group">
+<span class="material-symbols-outlined text-[32px] text-hud-muted group-hover:text-orange-400 transition-colors">thermostat</span>
+<span class="text-[11px] font-medium uppercase tracking-[1.5px] text-hud-muted group-hover:text-orange-400 transition-colors">Thermal</span>
+</button>
+<!-- CRT Mode -->
+<button class="glass-card aspect-square rounded-md flex flex-col items-center justify-center gap-3 hover:scale-105 transition-transform duration-150 group relative overflow-hidden">
+<span class="material-symbols-outlined text-[32px] text-hud-muted group-hover:text-primary transition-colors z-10">tv_gen</span>
+<span class="text-[11px] font-medium uppercase tracking-[1.5px] text-hud-muted group-hover:text-primary transition-colors z-10">CRT Glitch</span>
+<div class="absolute inset-0 bg-primary/0 group-hover:bg-primary/5 transition-colors z-0"></div>
+</button>
+</div>
+</div>
+</div>
+<!-- BOTTOM DOCK: POI Command -->
+<div class="w-full h-[80px] flex justify-center items-end pb-0 pointer-events-none mt-auto">
+<div class="glass-panel h-full w-[60%] max-w-[800px] rounded-lg flex items-center justify-between px-6 pointer-events-auto relative">
+<!-- Coordinate Display (Floating) -->
+<div class="absolute -top-10 left-1/2 -translate-x-1/2 bg-hud-surface border border-white/10 px-4 py-1.5 rounded-full backdrop-blur-md">
+<span class="font-mono text-[14px] text-primary">S 26° 12' 16" / E 28° 2' 44"</span>
+</div>
+<div class="flex items-center gap-4 w-full">
+<!-- Locations -->
+<div class="flex items-center gap-3 flex-1 justify-center">
+<button class="px-6 py-2 rounded-full glass-card text-[12px] uppercase font-bold tracking-wider hover:border-primary transition-colors">HQ</button>
+<button class="px-6 py-2 rounded-full bg-primary text-background-dark text-[12px] uppercase font-bold tracking-wider border border-primary shadow-[0_0_15px_rgba(13,227,242,0.4)]">Joburg</button>
+<button class="px-6 py-2 rounded-full glass-card text-[12px] uppercase font-bold tracking-wider hover:border-primary transition-colors">Cape Town</button>
+<button class="px-6 py-2 rounded-full glass-card text-[12px] uppercase font-bold tracking-wider hover:border-primary transition-colors">Pretoria</button>
+<button class="px-6 py-2 rounded-full glass-card text-[12px] uppercase font-bold tracking-wider hover:border-primary transition-colors">Durban</button>
+</div>
+<!-- Map Reset -->
+<button class="w-10 h-10 rounded-full glass-card flex items-center justify-center hover:border-primary shrink-0 transition-colors">
+<span class="material-symbols-outlined text-hud-muted hover:text-primary text-[20px] transition-colors">my_location</span>
+</button>
+</div>
+</div>
+</div>
+</body></html>

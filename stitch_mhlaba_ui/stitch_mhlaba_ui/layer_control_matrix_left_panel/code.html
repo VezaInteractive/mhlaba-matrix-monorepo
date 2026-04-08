@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Layer Control Matrix - Sleek Glassmorphism HUD</title>
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&amp;family=Manrope:wght@400;500;700&amp;family=JetBrains+Mono:wght@400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Theme Configuration -->
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#0de3f2",
+                        "background-light": "#f5f8f8",
+                        "background-dark": "#102122",
+                        "hud-bg": "rgba(11, 15, 25, 0.45)",
+                        "hud-surface": "rgba(255, 255, 255, 0.05)",
+                        "hud-surface-hover": "rgba(255, 255, 255, 0.10)",
+                        "hud-text": "#E0E7FF",
+                        "hud-muted": "rgba(224, 231, 255, 0.4)",
+                        "hud-accent": "#FF0055",
+                    },
+                    fontFamily: {
+                        "display": ["Space Grotesk", "sans-serif"],
+                        "body": ["Manrope", "sans-serif"],
+                        "mono": ["JetBrains Mono", "monospace"],
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.5rem",
+                        "md": "8px",
+                        "lg": "16px",
+                        "xl": "1.5rem",
+                        "full": "9999px"
+                    },
+                    boxShadow: {
+                        'glow': '0 0 10px rgba(13, 227, 242, 0.3)',
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        /* Custom utilities for precise HUD styling */
+        .glass-panel {
+            background-color: rgba(11, 15, 25, 0.45);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-card {
+            background-color: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .glass-card:hover {
+            background-color: rgba(255, 255, 255, 0.10);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+        
+        .glass-card.active {
+            background-color: rgba(13, 227, 242, 0.1);
+            border: 1px solid #0de3f2;
+            box-shadow: 0 0 10px rgba(13, 227, 242, 0.2) inset;
+        }
+
+        .text-glow {
+            text-shadow: 0 0 8px rgba(13, 227, 242, 0.6);
+        }
+
+        /* Ambient background to simulate the WebGL environment */
+        body {
+            background-image: linear-gradient(to bottom right, #050a0f, #1a2b3c);
+            background-size: cover;
+            background-attachment: fixed;
+        }
+        
+        /* Simulated 3D Map Background Elements for context */
+        .bg-grid {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-image: 
+                linear-gradient(rgba(13, 227, 242, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(13, 227, 242, 0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            z-index: -1;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="min-h-screen w-full overflow-hidden text-hud-text font-body antialiased relative selection:bg-primary selection:text-black">
+<!-- Simulated WebGL Background Context -->
+<div class="bg-grid"></div>
+<div class="fixed top-1/2 left-1/2 w-[800px] h-[800px] -translate-x-1/2 -translate-y-1/2 bg-primary/5 rounded-full blur-[100px] pointer-events-none -z-10"></div>
+<!-- Edge-to-Edge HUD Wrapper -->
+<div class="absolute inset-0 p-6 pointer-events-none flex items-start">
+<!-- Left Panel: Layer Control Matrix -->
+<div class="glass-panel w-[320px] h-[calc(100vh-48px)] rounded-lg flex flex-col pointer-events-auto relative overflow-hidden group">
+<!-- Sticky Header -->
+<div class="px-6 py-5 border-b border-white/10 sticky top-0 z-10 bg-hud-bg/80 backdrop-blur-md">
+<h2 class="font-display font-bold text-[18px] uppercase tracking-[2px] text-white">DATA LAYERS</h2>
+<div class="absolute bottom-0 left-0 w-full h-[1px] bg-gradient-to-r from-primary/50 to-transparent"></div>
+</div>
+<!-- Scrollable Content List -->
+<div class="p-4 flex flex-col gap-4 overflow-y-auto">
+<!-- CCTV Toggle Item (Active state example) -->
+<div class="glass-card active h-12 rounded-md flex justify-between items-center px-4 cursor-pointer relative overflow-hidden">
+<!-- Smooth fill transition effect simulation -->
+<div class="absolute inset-0 w-full h-full bg-gradient-to-r from-primary/20 to-transparent opacity-50 pointer-events-none"></div>
+<div class="flex items-center gap-3 relative z-10">
+<span class="material-symbols-outlined text-primary text-[20px] text-glow" style="font-variation-settings: 'FILL' 1;">videocam</span>
+<p class="font-body text-[14px] font-medium text-primary text-glow">CCTV</p>
+</div>
+<div class="relative z-10 flex items-center gap-3">
+<span class="font-mono text-[12px] text-primary">ON</span>
+<label class="relative flex h-[24px] w-[40px] cursor-pointer items-center rounded-full border border-primary bg-primary/20 p-[2px] justify-end shadow-glow">
+<div class="h-full w-[18px] rounded-full bg-primary shadow-[0_0_5px_rgba(13,227,242,0.8)]"></div>
+<input checked="" class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Live Flights Toggle Item -->
+<div class="glass-card h-12 rounded-md flex justify-between items-center px-4 cursor-pointer relative">
+<div class="flex items-center gap-3 z-10">
+<span class="material-symbols-outlined text-hud-muted text-[20px]">flight</span>
+<p class="font-body text-[14px] font-medium text-hud-text">Live Flights</p>
+</div>
+<div class="z-10 flex items-center gap-3">
+<span class="font-mono text-[12px] text-hud-muted">042 ACTIVE</span>
+<label class="relative flex h-[24px] w-[40px] cursor-pointer items-center rounded-full border border-white/20 bg-black/30 p-[2px] justify-start">
+<div class="h-full w-[18px] rounded-full bg-white/50"></div>
+<input class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Satellites Toggle Item -->
+<div class="glass-card h-12 rounded-md flex justify-between items-center px-4 cursor-pointer relative">
+<div class="flex items-center gap-3 z-10">
+<span class="material-symbols-outlined text-hud-muted text-[20px]">satellite</span>
+<p class="font-body text-[14px] font-medium text-hud-text">Satellites</p>
+</div>
+<div class="z-10 flex items-center gap-3">
+<span class="font-mono text-[12px] text-hud-muted">ORBIT 3</span>
+<label class="relative flex h-[24px] w-[40px] cursor-pointer items-center rounded-full border border-white/20 bg-black/30 p-[2px] justify-start">
+<div class="h-full w-[18px] rounded-full bg-white/50"></div>
+<input class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Joburg Traffic Toggle Item (Error state example) -->
+<div class="glass-card h-12 rounded-md flex justify-between items-center px-4 cursor-pointer relative border-hud-accent/50 bg-hud-accent/5 hover:border-hud-accent/80 hover:bg-hud-accent/10">
+<div class="flex items-center gap-3 z-10">
+<span class="material-symbols-outlined text-hud-accent text-[20px]">traffic</span>
+<p class="font-body text-[14px] font-medium text-hud-text">Joburg Traffic</p>
+</div>
+<div class="z-10 flex items-center gap-3">
+<span class="font-mono text-[12px] text-hud-accent animate-pulse">#FF34 ERR</span>
+<label class="relative flex h-[24px] w-[40px] cursor-not-allowed items-center rounded-full border border-hud-accent/30 bg-black/30 p-[2px] justify-start opacity-50">
+<div class="h-full w-[18px] rounded-full bg-hud-accent/50"></div>
+<input class="invisible absolute" disabled="" type="checkbox"/>
+</label>
+</div>
+</div>
+<!-- Grid Overlay Toggle Item -->
+<div class="glass-card h-12 rounded-md flex justify-between items-center px-4 cursor-pointer relative">
+<div class="flex items-center gap-3 z-10">
+<span class="material-symbols-outlined text-hud-muted text-[20px]">grid_on</span>
+<p class="font-body text-[14px] font-medium text-hud-text">Tactical Grid</p>
+</div>
+<div class="z-10 flex items-center gap-3">
+<span class="font-mono text-[12px] text-hud-muted">100M SEC</span>
+<label class="relative flex h-[24px] w-[40px] cursor-pointer items-center rounded-full border border-white/20 bg-black/30 p-[2px] justify-start">
+<div class="h-full w-[18px] rounded-full bg-white/50"></div>
+<input class="invisible absolute" type="checkbox"/>
+</label>
+</div>
+</div>
+</div>
+<!-- Bottom Fade for scroll indication -->
+<div class="absolute bottom-0 left-0 w-full h-12 bg-gradient-to-t from-hud-bg to-transparent pointer-events-none"></div>
+<!-- Panel decorative edges -->
+<div class="absolute top-0 left-0 w-2 h-[1px] bg-primary"></div>
+<div class="absolute top-0 left-0 w-[1px] h-2 bg-primary"></div>
+<div class="absolute bottom-0 right-0 w-2 h-[1px] bg-white/30 transition-opacity duration-300 group-hover:bg-white/60"></div>
+<div class="absolute bottom-0 right-0 w-[1px] h-2 bg-white/30 transition-opacity duration-300 group-hover:bg-white/60"></div>
+</div>
+</div>
+</body></html>

@@ -1,0 +1,32 @@
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\download-tle.js
+  @typescript-eslint/no-require-imports
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\src\components\HUD\FlightTargetingHUD.tsx
+  react-hooks/set-state-in-effect
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\src\components\HUD\LeftPanel.tsx
+  @typescript-eslint/no-explicit-any, react-hooks/purity
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\src\components\HUD\RightPanel.tsx
+  react-hooks/purity, @typescript-eslint/no-explicit-any, react/jsx-no-comment-textnodes
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\src\components\MapViewer.tsx
+  @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\src\hooks\useFlightTelemetry.ts
+  @typescript-eslint/no-explicit-any
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\src\hooks\useSatelliteTelemetry.ts
+  react-hooks/set-state-in-effect
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\src\workers\flight-telemetry.worker.ts
+  @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\src\workers\satellite-propagation.worker.ts
+  @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any, @typescript-eslint/no-explicit-any
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\test-propagate.js
+  @typescript-eslint/no-require-imports
+
+C:\Users\mrmaf\OneDrive\Desktop\Mhlaba Matrix 2\navigator-app\update_real_estate.js
+  @typescript-eslint/no-require-imports, @typescript-eslint/no-require-imports
