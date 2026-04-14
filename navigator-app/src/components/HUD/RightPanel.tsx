@@ -113,6 +113,7 @@ export const CITY_INTEL: Record<string, CityProfile> = {
 
 export default function RightPanel() {
   const { visionMode, setVisionMode, selectedSatellite, selectedFlight, selectedMaritime, activePOI, activeContinent, setActiveContinent, showAdModal, setShowAdModal } = useAppStore();
+  const hoveredMaritime = useAppStore((state) => state.hoveredMaritime);
 
   const selectedCity = activePOI && CITY_INTEL[activePOI] ? CITY_INTEL[activePOI] : null;
 
@@ -203,25 +204,36 @@ export default function RightPanel() {
                 )}
 
                 {/* MARITIME DOSSIER */}
-                {selectedMaritime && (
-                  <>
-                    <div className="flex flex-col gap-1 border-l-2 border-[#00F0FF] pl-3 py-1">
-                      <span className="text-[10px] font-mono text-[#00F0FF]/70 tracking-widest">CLAS: NAVAL</span>
-                      <span className="font-display font-bold text-xl uppercase truncate">MMSI: {selectedMaritime.id}</span>
-                      <span className="font-mono text-xs">TYPE: {selectedMaritime.type}</span>
-                    </div>
+                {(hoveredMaritime || selectedMaritime) && (
+                  (() => {
+                    const activeMaritime = hoveredMaritime || selectedMaritime;
+                    return (
+                      <>
+                        <div className="flex flex-col gap-1 border-l-2 border-[#00F0FF] pl-3 py-1">
+                          <span className="text-[10px] font-mono text-[#00F0FF]/70 tracking-widest">CLAS: NAVAL</span>
+                          <span className="font-display font-bold text-xl uppercase truncate">
+                            {activeMaritime.flag} {activeMaritime.name}
+                          </span>
+                          <span className="font-mono text-xs">MMSI: {activeMaritime.mmsi} | IMO: {activeMaritime.imo || "N/A"}</span>
+                        </div>
 
-                    <div className="grid grid-cols-2 gap-3 mt-4">
-                      <div className="bg-black/40 border border-white/5 rounded p-2 flex flex-col">
-                        <span className="text-[9px] font-mono text-muted">SPEED</span>
-                        <span className="font-mono text-[#00FF00] font-bold">{selectedMaritime.speed.toFixed(1)} KTS</span>
-                      </div>
-                      <div className="bg-black/40 border border-white/5 rounded p-2 flex flex-col">
-                        <span className="text-[9px] font-mono text-muted">HEADING</span>
-                        <span className="font-mono text-[#00FF00] font-bold">{selectedMaritime.heading.toFixed(1)}°</span>
-                      </div>
-                    </div>
-                  </>
+                        <div className="grid grid-cols-2 gap-3 mt-4">
+                          <div className="bg-black/40 border border-white/5 rounded p-2 flex flex-col">
+                            <span className="text-[9px] font-mono text-muted">SPEED (SOG)</span>
+                            <span className="font-mono text-[#00FF00] font-bold">{activeMaritime.sog.toFixed(1)} KTS</span>
+                          </div>
+                          <div className="bg-black/40 border border-white/5 rounded p-2 flex flex-col">
+                            <span className="text-[9px] font-mono text-muted">HEADING</span>
+                            <span className="font-mono text-[#00FF00] font-bold">{activeMaritime.heading.toFixed(1)}°</span>
+                          </div>
+                          <div className="bg-black/40 border border-white/5 rounded p-2 flex flex-col col-span-2 border-l-2 border-l-[#00F0FF]">
+                            <span className="text-[9px] font-mono text-muted mb-1">NAVIGATIONAL STATUS</span>
+                            <span className="font-mono text-xs text-white/90 truncate">{activeMaritime.navStatusText || "Undefined"}</span>
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })()
                 )}
 
                 {/* CITY DOSSIER */}

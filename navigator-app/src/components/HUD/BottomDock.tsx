@@ -2,8 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { useAppStore, POIs, POIKey } from "@/store/useAppStore";
-import { MapPin, RotateCcw, Clock, ShieldAlert, Cpu, Plane, Ship } from "lucide-react";
-import { useState, useEffect } from "react";
+import { MapPin, RotateCcw, Clock, Plane, Ship } from "lucide-react";
 
 const LocationPill = ({
   poiKey,
@@ -82,106 +81,98 @@ const CONTINENT_CITIES: Record<string, { poiKey: POIKey; label: string }[]> = {
 export default function BottomDock() {
   const { activeContinent, activePOI, setActivePOI, timeMultiplier, setTimeMultiplier } = useAppStore();
   const selectedFlight = useAppStore((state) => state.selectedFlight);
+  const hoveredFlight = useAppStore((state) => state.hoveredFlight);
   const selectedMaritime = useAppStore((state) => state.selectedMaritime);
+  const hoveredMaritime = useAppStore((state) => state.hoveredMaritime);
 
-  const [ping, setPing] = useState(12);
-
-  // Fake Ping fluctuation for aesthetics
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setPing(12 + Math.floor(Math.random() * 8 - 4));
-    }, 2000);
-    return () => clearInterval(interval);
-  }, []);
+  // Resolve active targets: hover takes priority over click-lock
+  const activeMaritime = hoveredMaritime || selectedMaritime;
+  const activeFlight = hoveredFlight || selectedFlight;
 
   let shipColor = 'text-[#00FFFF]';
-  if (selectedMaritime && selectedMaritime.type) {
-    const t = selectedMaritime.type.toUpperCase();
+  if (activeMaritime && activeMaritime.typeName) {
+    const t = activeMaritime.typeName.toUpperCase();
     if (t.includes('CARGO')) shipColor = 'text-[#FF8C00]';
     else if (t.includes('TANKER')) shipColor = 'text-[#FF0000]';
     else if (t.includes('PASSENGER')) shipColor = 'text-[#0000FF]';
   }
 
   const renderCenterContent = () => {
-    if (selectedFlight) {
+
+    if (activeFlight) {
       return (
         <div className="flex items-center gap-8 animate-in fade-in zoom-in-95 duration-300">
           <div className="flex items-center gap-3 border-r border-white/10 pr-6">
             <Plane className="w-5 h-5 text-[#FFCC00]" />
             <div className="flex flex-col">
               <span className="text-[9px] font-mono text-muted uppercase tracking-widest">Aviation Intercept</span>
-              <span className="text-sm font-mono text-[#FFCC00] font-bold tracking-widest uppercase">{selectedFlight.callsign || 'UNK'}</span>
+              <span className="text-sm font-mono text-[#FFCC00] font-bold tracking-widest uppercase">{activeFlight.callsign || 'UNK'}</span>
             </div>
           </div>
           <div className="flex flex-col min-w-[120px]">
             <span className="text-[8px] font-mono text-muted uppercase">Airline</span>
-            <span className="text-xs font-mono text-white font-bold truncate">{selectedFlight.airline || 'UNK'}</span>
+            <span className="text-xs font-mono text-white font-bold truncate">{activeFlight.airline || 'UNK'}</span>
           </div>
           <div className="flex flex-col min-w-[120px]">
             <span className="text-[8px] font-mono text-muted uppercase">Origin</span>
-            <span className="text-xs font-mono text-[#00FFFF] font-bold truncate">{selectedFlight.origin || 'UNK'}</span>
+            <span className="text-xs font-mono text-[#00FFFF] font-bold truncate">{activeFlight.origin || 'UNK'}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[8px] font-mono text-muted uppercase">Altitude</span>
-            <span className="text-xs font-mono font-bold text-white">{(selectedFlight.alt || 0).toLocaleString()} m</span>
+            <span className="text-xs font-mono font-bold text-white">{(activeFlight.alt || 0).toLocaleString()} m</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[8px] font-mono text-muted uppercase">Speed</span>
-            <span className="text-xs font-mono font-bold text-[#FF0055]">M {(selectedFlight.mach || 0).toFixed(3)}</span>
+            <span className="text-xs font-mono font-bold text-[#FF0055]">M {(activeFlight.mach || 0).toFixed(3)}</span>
           </div>
         </div>
       );
     }
 
-    if (selectedMaritime) {
+    if (activeMaritime) {
       return (
-        <div className="flex items-center gap-8 animate-in fade-in zoom-in-95 duration-300">
-          <div className="flex items-center gap-3 border-r border-white/10 pr-6">
+        <div className="flex items-center gap-6 animate-in fade-in zoom-in-95 duration-200">
+          <div className="flex items-center gap-3 border-r border-white/10 pr-5">
             <Ship className={`w-5 h-5 ${shipColor}`} />
             <div className="flex flex-col">
               <span className="text-[9px] font-mono text-muted uppercase tracking-widest">Vessel Uplink</span>
-              <span className={`text-sm font-mono ${shipColor} font-bold tracking-widest uppercase truncate max-w-[120px]`}>{selectedMaritime.type || 'UNK'}</span>
+              <span className={`text-sm font-mono ${shipColor} font-bold tracking-widest uppercase truncate max-w-[140px]`}>
+                {activeMaritime.flag} {activeMaritime.name || 'UNK'}
+              </span>
             </div>
           </div>
-          <div className="flex flex-col min-w-[120px]">
+          <div className="flex flex-col">
             <span className="text-[8px] font-mono text-muted uppercase">MMSI</span>
-            <span className="text-xs font-mono text-white font-bold">{selectedMaritime.id || 'UNK'}</span>
+            <span className="text-xs font-mono text-white font-bold">{activeMaritime.mmsi || 'UNK'}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8px] font-mono text-muted uppercase">Type</span>
+            <span className={`text-xs font-mono font-bold ${shipColor} truncate max-w-[100px]`}>{activeMaritime.typeName || 'UNK'}</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[8px] font-mono text-muted uppercase">Speed</span>
-            <span className="text-xs font-mono font-bold text-[#FF0055]">{(selectedMaritime.speed || 0).toFixed(1)} kts</span>
+            <span className="text-xs font-mono font-bold text-[#FF0055]">{(activeMaritime.sog || 0).toFixed(1)} kts</span>
           </div>
           <div className="flex flex-col">
             <span className="text-[8px] font-mono text-muted uppercase">Heading</span>
-            <span className="text-xs font-mono font-bold text-[#FFCC00]">{Math.round(selectedMaritime.heading || 0)}°</span>
+            <span className="text-xs font-mono font-bold text-[#FFCC00]">{Math.round(activeMaritime.heading || 0)}°</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8px] font-mono text-muted uppercase">Destination</span>
+            <span className="text-xs font-mono font-bold text-[#00FF00] truncate max-w-[100px]">{activeMaritime.destination || '—'}</span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-[8px] font-mono text-muted uppercase">Status</span>
+            <span className="text-xs font-mono font-bold text-[#00FFFF] truncate max-w-[100px]">{activeMaritime.navStatusText || 'N/A'}</span>
           </div>
         </div>
       );
     }
 
     return (
-      <div className="flex items-center gap-6">
-        <div className="flex flex-col">
-          <span className="text-[8px] font-mono text-muted uppercase">Global Ping</span>
-          <div className="flex items-center gap-1.5">
-            <div className="w-1.5 h-1.5 bg-[#00FF00] rounded-full animate-pulse" />
-            <span className="text-xs font-mono text-[#00FF00]">{ping}ms</span>
-          </div>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-[8px] font-mono text-muted uppercase">System Status</span>
-          <div className="flex items-center gap-1.5 text-[#00FFFF]">
-            <ShieldAlert className="w-3 h-3" />
-            <span className="text-xs font-mono font-bold">SECURE_LINK</span>
-          </div>
-        </div>
-        <div className="flex flex-col">
-          <span className="text-[8px] font-mono text-muted uppercase">Active Vectors</span>
-          <div className="flex items-center gap-1.5 text-primary">
-            <Cpu className="w-3 h-3" />
-            <span className="text-xs font-mono tracking-widest font-bold animate-[pulse_3s_ease-in-out_infinite]">9,824</span>
-          </div>
-        </div>
+      <div className="flex items-center gap-3 opacity-40">
+        <Ship className="w-4 h-4 text-white/50" />
+        <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest">Hover over an asset to inspect</span>
       </div>
     );
   };

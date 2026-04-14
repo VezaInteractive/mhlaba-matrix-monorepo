@@ -115,7 +115,7 @@ export default function LeftPanel() {
           </h2>
         </div>
 
-        <div className="flex flex-col gap-4 mt-2">
+        <div className="flex flex-col gap-4 mt-2 overflow-y-auto scrollbar-none flex-1 pr-1" style={{ minHeight: '200px' }}>
           <ToggleCard
             icon={Video}
             label="CCTV"
@@ -158,13 +158,7 @@ export default function LeftPanel() {
             isActive={layers.climate}
             onClick={() => toggleLayer("climate")}
           />
-          <ToggleCard
-            icon={Activity}
-            label="Cyber Intel"
-            value={layers.cyber ? "WARN" : "SAFE"}
-            isActive={layers.cyber}
-            onClick={() => toggleLayer("cyber")}
-          />
+
           <ToggleCard
             icon={Building2}
             label="Businesses"
@@ -180,7 +174,6 @@ export default function LeftPanel() {
             onClick={() => toggleLayer("realEstate")}
           />
         </div>
-
         {/* Live Camera Feed Panel */}
         {selectedCCTV && layers.cctv && (
           <div className="mt-auto animate-in fade-in slide-in-from-bottom-4 duration-500 overflow-hidden flex flex-col gap-3 pt-4 border-t border-glass">
@@ -231,8 +224,7 @@ export default function LeftPanel() {
               </div>
             </div>
           </div>
-        )}
-      </div>
+        )}      </div>
     </div>
   );
 }

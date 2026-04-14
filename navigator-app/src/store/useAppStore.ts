@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { VesselRecord } from '@/hooks/useMaritimeTelemetry';
 
 export type VisionMode = 'NORMAL' | 'NVG' | 'THERMAL' | 'CRT';
 export type Continent = 'AFRICA' | 'EUROPE' | 'NORTH_AMERICA' | 'SOUTH_AMERICA' | 'ASIA' | 'OCEANIA';
@@ -69,16 +70,23 @@ interface AppState {
   setCctvScreenPos: (pos: { x: number; y: number } | null) => void;
   selectedFlight: { id: string; callsign: string; airline?: string; origin?: string; alt: number; mach: number } | null;
   setSelectedFlight: (flight: { id: string; callsign: string; airline?: string; origin?: string; alt: number; mach: number } | null) => void;
+  hoveredFlight: { id: string; callsign: string; airline?: string; origin?: string; alt: number; mach: number } | null;
+  setHoveredFlight: (flight: { id: string; callsign: string; airline?: string; origin?: string; alt: number; mach: number } | null) => void;
   flightScreenPos: { x: number; y: number } | null;
   setFlightScreenPos: (pos: { x: number; y: number } | null) => void;
   selectedSatellite: { id: string; name: string; apogee: number; perigee: number; inc: number } | null;
   setSelectedSatellite: (sat: { id: string; name: string; apogee: number; perigee: number; inc: number } | null) => void;
   satelliteScreenPos: { x: number; y: number } | null;
   setSatelliteScreenPos: (pos: { x: number; y: number } | null) => void;
-  selectedMaritime: { id: string; type: string; speed: number; heading: number } | null;
-  setSelectedMaritime: (vessel: { id: string; type: string; speed: number; heading: number } | null) => void;
+  selectedMaritime: VesselRecord | null;
+  setSelectedMaritime: (vessel: VesselRecord | null) => void;
   maritimeScreenPos: { x: number; y: number } | null;
   setMaritimeScreenPos: (pos: { x: number; y: number } | null) => void;
+
+  hoveredMaritime: VesselRecord | null;
+  setHoveredMaritime: (vessel: VesselRecord | null) => void;
+  maritimeHoverScreenPos: { x: number; y: number } | null;
+  setMaritimeHoverScreenPos: (pos: { x: number; y: number } | null) => void;
 
   // Global Time Control
   timeMultiplier: number;
@@ -128,6 +136,8 @@ export const useAppStore = create<AppState>((set) => ({
   setCctvScreenPos: (pos) => set({ cctvScreenPos: pos }),
   selectedFlight: null,
   setSelectedFlight: (flight) => set({ selectedFlight: flight }),
+  hoveredFlight: null,
+  setHoveredFlight: (flight) => set({ hoveredFlight: flight }),
   flightScreenPos: null,
   setFlightScreenPos: (pos) => set({ flightScreenPos: pos }),
   selectedSatellite: null,
@@ -138,6 +148,10 @@ export const useAppStore = create<AppState>((set) => ({
   setSelectedMaritime: (vessel) => set({ selectedMaritime: vessel }),
   maritimeScreenPos: null,
   setMaritimeScreenPos: (pos) => set({ maritimeScreenPos: pos }),
+  hoveredMaritime: null,
+  setHoveredMaritime: (vessel) => set({ hoveredMaritime: vessel }),
+  maritimeHoverScreenPos: null,
+  setMaritimeHoverScreenPos: (pos) => set({ maritimeHoverScreenPos: pos }),
 
   timeMultiplier: 1,
   setTimeMultiplier: (multiplier) => set({ timeMultiplier: multiplier }),
@@ -147,3 +161,7 @@ export const useAppStore = create<AppState>((set) => ({
   executeSearch: null,
   triggerSearch: (query) => set({ executeSearch: query + "_" + Date.now() })
 }));
+
+if (typeof window !== 'undefined') {
+  (window as any).appStore = useAppStore;
+}

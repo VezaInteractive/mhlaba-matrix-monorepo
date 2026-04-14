@@ -76,7 +76,7 @@ export default function MapViewer() {
   const maritimeTelemetry = useMaritimeTelemetry(layers.maritime);
   const climateTelemetry = useClimateTelemetry(layers.climate);
   const cyberIntel = useCyberIntel(layers.cyber);
-  
+
   const stageRef = useRef<CesiumType>(null);
   const flightsDataSourceRef = useRef<CesiumType>(null);
   const cctvDataSourceRef = useRef<CesiumType>(null);
@@ -87,7 +87,7 @@ export default function MapViewer() {
   const cyberDataSourceRef = useRef<CesiumType>(null);
   const businessesDataSourceRef = useRef<CesiumType>(null);
   const realEstateDataSourceRef = useRef<CesiumType>(null);
-  
+
   const [viewerReady, setViewerReady] = useState(false);
 
   const AIRPLANE_SVG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="#FFCC00" width="64" height="64"><path stroke="#000000" stroke-width="12" d="M256 16C237.2 16 222 31.2 222 50V216L24 104C10.7 96.5 0 102 0 112V144C0 152 4.4 160 11.2 164L222 284V424C222 441.7 207.7 456 190 456H160C142.3 456 128 470.3 128 488V504C128 508.4 131.6 512 136 512H376C380.4 512 384 508.4 384 504V488C384 470.3 369.7 456 352 456H322C304.3 456 290 441.7 290 424V284L500.8 164C507.6 160 512 152 512 144V112C512 102 501.3 96.5 488 104L290 216V50C290 31.2 274.8 16 256 16z"/></svg>');
@@ -100,7 +100,7 @@ export default function MapViewer() {
       const Cesium = (window as any).Cesium;
       if (Cesium && containerRef.current && !viewerRef.current) {
         clearInterval(interval);
-        
+
         Cesium.Ion.defaultAccessToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJlNDIwYTBmNS0wMGYxLTRmZWYtYTQ1OC1kOWY1N2EzMGM1NGIiLCJpZCI6MTk3NjM5LCJpYXQiOjE3NzUwMjg5ODF9.ZQhqAaU7UFaLmLGouqfH4jjffUmI9xXaZ-aQkgxlQbU";
 
         const viewer = new Cesium.Viewer(containerRef.current, {
@@ -129,6 +129,16 @@ export default function MapViewer() {
           })
           .catch((e: any) => console.log('3D Tiles Err:', e));
 
+        // Set initial camera to center over Africa
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(20.0, 0.0, 18000000),
+          orientation: {
+            heading: Cesium.Math.toRadians(0),
+            pitch: Cesium.Math.toRadians(-90),
+            roll: 0.0
+          }
+        });
+
         viewerRef.current = viewer;
 
         // Create data sources
@@ -136,13 +146,13 @@ export default function MapViewer() {
         cctvDataSourceRef.current = new Cesium.CustomDataSource('cctv');
         trafficDataSourceRef.current = new Cesium.CustomDataSource('traffic');
         satellitesDataSourceRef.current = new Cesium.CustomDataSource('satellites');
-        
+
         maritimeDataSourceRef.current = new Cesium.CustomDataSource('maritime');
         climateDataSourceRef.current = new Cesium.CustomDataSource('climate');
         cyberDataSourceRef.current = new Cesium.CustomDataSource('cyber');
         businessesDataSourceRef.current = new Cesium.CustomDataSource('businesses');
         realEstateDataSourceRef.current = new Cesium.CustomDataSource('realEstate');
-        
+
         viewer.dataSources.add(flightsDataSourceRef.current);
         viewer.dataSources.add(cctvDataSourceRef.current);
         viewer.dataSources.add(trafficDataSourceRef.current);
@@ -155,12 +165,12 @@ export default function MapViewer() {
 
         viewer.scene.globe.enableLighting = false; // Disabled day/night terminators for consistent tactical illumination
         viewer.scene.highDynamicRange = true; // High accuracy colors
-        viewer.clock.shouldAnimate = false; // Disable global clock animation to freeze lighting bugs on tiles
+        viewer.clock.shouldAnimate = true; // Required for entity position resolution in pick handlers
         if (viewer.scene.skyAtmosphere) {
-            viewer.scene.skyAtmosphere.hueShift = 0.0;
-            viewer.scene.skyAtmosphere.brightnessShift = 0.0;
+          viewer.scene.skyAtmosphere.hueShift = 0.0;
+          viewer.scene.skyAtmosphere.brightnessShift = 0.0;
         }
-        
+
         setViewerReady(true);
       }
     }, 100);
@@ -194,18 +204,18 @@ export default function MapViewer() {
   // Global Search Engine Router
   useEffect(() => {
     if (!executeSearch || !viewerRef.current || !searchQuery) return;
-    
+
     const query = searchQuery.trim().toUpperCase();
     const Cesium = (window as any).Cesium;
     let foundEntity = null;
     let layerType = null;
 
     // Search Cities (Regional Intel Intercept)
-    if (query === "JOHANNESBURG" || query === "JOBURG" || query === "JHB") { useAppStore.getState().setActiveContinent('AFRICA'); useAppStore.getState().setActivePOI('JOBURG'); return; } 
-    if (query === "CAPE TOWN" || query === "CAPETOWN" || query === "CTP") { useAppStore.getState().setActiveContinent('AFRICA'); useAppStore.getState().setActivePOI('CAPETOWN'); return; } 
-    if (query === "PRETORIA" || query === "PTA") { useAppStore.getState().setActiveContinent('AFRICA'); useAppStore.getState().setActivePOI('PRETORIA'); return; } 
+    if (query === "JOHANNESBURG" || query === "JOBURG" || query === "JHB") { useAppStore.getState().setActiveContinent('AFRICA'); useAppStore.getState().setActivePOI('JOBURG'); return; }
+    if (query === "CAPE TOWN" || query === "CAPETOWN" || query === "CTP") { useAppStore.getState().setActiveContinent('AFRICA'); useAppStore.getState().setActivePOI('CAPETOWN'); return; }
+    if (query === "PRETORIA" || query === "PTA") { useAppStore.getState().setActiveContinent('AFRICA'); useAppStore.getState().setActivePOI('PRETORIA'); return; }
     if (query === "DURBAN" || query === "DBN") { useAppStore.getState().setActiveContinent('AFRICA'); useAppStore.getState().setActivePOI('DURBAN'); return; }
-    
+
     if (query === "LONDON" || query === "LON") { useAppStore.getState().setActiveContinent('EUROPE'); useAppStore.getState().setActivePOI('LONDON'); return; }
     if (query === "BERLIN" || query === "BER") { useAppStore.getState().setActiveContinent('EUROPE'); useAppStore.getState().setActivePOI('BERLIN'); return; }
     if (query === "PARIS" || query === "PAR") { useAppStore.getState().setActiveContinent('EUROPE'); useAppStore.getState().setActivePOI('PARIS'); return; }
@@ -233,79 +243,79 @@ export default function MapViewer() {
 
     // Search Satellites
     if (!foundEntity && satellitesDataSourceRef.current) {
-        const ents = satellitesDataSourceRef.current.entities.values;
-        for (let e of ents) {
-            const name = e.properties.satName?.getValue()?.toUpperCase() || "";
-            const id = e.properties.satId?.getValue()?.toString() || "";
-            if (name.includes(query) || id.includes(query)) {
-                foundEntity = e;
-                layerType = 'sat';
-                break;
-            }
+      const ents = satellitesDataSourceRef.current.entities.values;
+      for (let e of ents) {
+        const name = e.properties.satName?.getValue()?.toUpperCase() || "";
+        const id = e.properties.satId?.getValue()?.toString() || "";
+        if (name.includes(query) || id.includes(query)) {
+          foundEntity = e;
+          layerType = 'sat';
+          break;
         }
+      }
     }
 
     // Search Flights
     if (!foundEntity && flightsDataSourceRef.current) {
-        const ents = flightsDataSourceRef.current.entities.values;
-        for (let e of ents) {
-            const callsign = e.properties.callsign?.getValue()?.toUpperCase() || "";
-            const id = e.properties.flightId?.getValue()?.toString() || "";
-            if (callsign.includes(query) || id.includes(query)) {
-                foundEntity = e;
-                layerType = 'flight';
-                break;
-            }
+      const ents = flightsDataSourceRef.current.entities.values;
+      for (let e of ents) {
+        const callsign = e.properties.callsign?.getValue()?.toUpperCase() || "";
+        const id = e.properties.flightId?.getValue()?.toString() || "";
+        if (callsign.includes(query) || id.includes(query)) {
+          foundEntity = e;
+          layerType = 'flight';
+          break;
         }
+      }
     }
 
     if (foundEntity) {
-        // Force the layer to be enabled if hidden
-        if (layerType === 'sat' && !layers.satellites) useAppStore.getState().toggleLayer('satellites');
-        if (layerType === 'flight' && !layers.flights) useAppStore.getState().toggleLayer('flights');
+      // Force the layer to be enabled if hidden
+      if (layerType === 'sat' && !layers.satellites) useAppStore.getState().toggleLayer('satellites');
+      if (layerType === 'flight' && !layers.flights) useAppStore.getState().toggleLayer('flights');
 
-        const pos = foundEntity.position.getValue(viewerRef.current.clock.currentTime);
-        if (pos) {
-            // Camera Flyover
-            viewerRef.current.camera.flyTo({
-                destination: pos,
-                duration: 2.0,
-                offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-45), 2000000)
-            });
+      const pos = foundEntity.position.getValue(viewerRef.current.clock.currentTime);
+      if (pos) {
+        // Camera Flyover
+        viewerRef.current.camera.flyTo({
+          destination: pos,
+          duration: 2.0,
+          offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-45), 2000000)
+        });
 
-            // Activate Target HUDs
-            if (layerType === 'sat') {
-                const satId = foundEntity.properties.satId.getValue().toString();
-                useAppStore.getState().setSelectedSatellite({
-                  id: satId,
-                  name: foundEntity.properties.satName.getValue(),
-                  apogee: foundEntity.properties.apogee.getValue(),
-                  perigee: foundEntity.properties.perigee.getValue(),
-                  inc: foundEntity.properties.inc.getValue()
-                });
-                useAppStore.getState().setSelectedFlight(null);
-                useAppStore.getState().setSelectedCCTV(null);
-                useAppStore.getState().setSelectedMaritime(null);
-                requestOrbitPrediction(parseInt(satId, 10));
-            } else if (layerType === 'flight') {
-                useAppStore.getState().setSelectedFlight({
-                  id: foundEntity.properties.flightId.getValue().toString(),
-                  callsign: foundEntity.properties.callsign.getValue(),
-                  alt: Math.round(foundEntity.properties.alt.getValue()),
-                  mach: parseFloat(foundEntity.properties.mach.getValue())
-                });
-                useAppStore.getState().setSelectedCCTV(null);
-                useAppStore.getState().setSelectedSatellite(null);
-                useAppStore.getState().setSelectedMaritime(null);
-            }
+        // Activate Target HUDs
+        if (layerType === 'sat') {
+          const satId = foundEntity.properties.satId.getValue().toString();
+          useAppStore.getState().setSelectedSatellite({
+            id: satId,
+            name: foundEntity.properties.satName.getValue(),
+            apogee: foundEntity.properties.apogee.getValue(),
+            perigee: foundEntity.properties.perigee.getValue(),
+            inc: foundEntity.properties.inc.getValue()
+          });
+          useAppStore.getState().setSelectedFlight(null);
+          useAppStore.getState().setSelectedCCTV(null);
+          useAppStore.getState().setSelectedMaritime(null);
+          requestOrbitPrediction(parseInt(satId, 10));
+        } else if (layerType === 'flight') {
+          useAppStore.getState().setSelectedFlight({
+            id: foundEntity.properties.flightId.getValue().toString(),
+            callsign: foundEntity.properties.callsign.getValue(),
+            alt: Math.round(foundEntity.properties.alt.getValue()),
+            mach: parseFloat(foundEntity.properties.mach.getValue())
+          });
+          useAppStore.getState().setSelectedCCTV(null);
+          useAppStore.getState().setSelectedSatellite(null);
+          useAppStore.getState().setSelectedMaritime(null);
         }
+      }
     }
   }, [executeSearch]);
 
   // Orbital Time Domain Mutator
   useEffect(() => {
     if (viewerRef.current) {
-        viewerRef.current.clock.multiplier = timeMultiplier;
+      viewerRef.current.clock.multiplier = timeMultiplier;
     }
   }, [timeMultiplier]);
 
@@ -323,7 +333,7 @@ export default function MapViewer() {
           cctvDataSourceRef.current.clustering.enabled = true;
           cctvDataSourceRef.current.clustering.pixelRange = 40;
           cctvDataSourceRef.current.clustering.minimumClusterSize = 3;
-          
+
           cctvDataSourceRef.current.clustering.clusterEvent.addEventListener((clusteredEntities: any, cluster: any) => {
             cluster.label.show = true;
             cluster.label.disableDepthTestDistance = Number.POSITIVE_INFINITY;
@@ -400,7 +410,7 @@ export default function MapViewer() {
             scaleByDistance: new Cesium.NearFarScalar(1.5e2, 1.2, 8.0e6, 0.4)
           },
           properties: {
-             companyKey: key
+            companyKey: key
           }
         });
       });
@@ -434,7 +444,7 @@ export default function MapViewer() {
             scaleByDistance: new Cesium.NearFarScalar(1.5e2, 1.2, 8.0e6, 0.4)
           },
           properties: {
-             propertyKey: key
+            propertyKey: key
           }
         });
       });
@@ -448,71 +458,73 @@ export default function MapViewer() {
 
     // Attach custom event handler
     const handler = new Cesium.ScreenSpaceEventHandler(viewerRef.current.scene.canvas);
-    
+
     const processInteraction = (click: any) => {
-      // 1. Standard precise pixel pick
       let pickedEntity: any = null;
-      let pickedObject = viewerRef.current.scene.pick(click.position);
-      
+
+      // 1. Standard scene.pick — works in all Cesium versions for visible billboards
+      const pickedObject = viewerRef.current.scene.pick(click.position);
       if (Cesium.defined(pickedObject) && pickedObject.id) {
-          pickedEntity = pickedObject.id;
-      }
-      
-      // 2. Spatial Math Proximity Search (Bulletproof hit detection)
-      if (!pickedEntity) {
-          let closestDist = 35; // Massive 35px click tolerance radius
-          
-          const searchLayer = (dataSource: any) => {
-              if (!dataSource || !dataSource.entities) return;
-              const ents = dataSource.entities.values;
-              for (let e of ents) {
-                  if (e.position) {
-                      const pos = e.position.getValue(viewerRef.current.clock.currentTime);
-                      if (pos) {
-                          const screenPos = Cesium.SceneTransforms.wgs84ToWindowCoordinates(viewerRef.current.scene, pos);
-                          if (screenPos) {
-                              const dist = Math.sqrt(
-                                  Math.pow(screenPos.x - click.position.x, 2) + 
-                                  Math.pow(screenPos.y - click.position.y, 2)
-                              );
-                              if (dist < closestDist) {
-                                  closestDist = dist;
-                                  pickedEntity = e;
-                              }
-                          }
-                      }
-                  }
-              }
-          };
-
-          if (flightsDataSourceRef.current?.show) searchLayer(flightsDataSourceRef.current);
-          if (satellitesDataSourceRef.current?.show) searchLayer(satellitesDataSourceRef.current);
-          if (maritimeDataSourceRef.current?.show) searchLayer(maritimeDataSourceRef.current);
-          if (realEstateDataSourceRef.current?.show) searchLayer(realEstateDataSourceRef.current);
-          if (businessesDataSourceRef.current?.show) searchLayer(businessesDataSourceRef.current);
+        const candidate = pickedObject.id;
+        const cId = typeof candidate === 'string' ? candidate :
+          typeof candidate.id === 'string' ? candidate.id :
+            (candidate.id && candidate.id.id) ? candidate.id.id : '';
+        if (cId.startsWith("mmsi-") || cId.startsWith("fl-") || cId.startsWith("cctv-") || cId.startsWith("sat-") || cId.includes("business_") || cId.includes("realEstate_")) {
+          pickedEntity = candidate;
+        }
       }
 
-      if (pickedEntity && pickedEntity.id) {
-        const entity = pickedEntity;
-        console.log("CLICKED ENTITY FOUND", entity, typeof entity.id, entity.id);
-        
+
+      if (pickedEntity) {
+        let entity = pickedEntity;
+
+        // If the pickedEntity is already just the string ID, we don't need to dive into entity.id
+        let targetId = typeof pickedEntity === 'string' ? pickedEntity :
+          typeof pickedEntity.id === 'string' ? pickedEntity.id :
+            (pickedEntity.id && pickedEntity.id.id) ? pickedEntity.id.id : String(pickedEntity.id || "");
+
+        console.log("DIAGNOSTIC CLICK TRACE:", {
+          hasPickedEntity: !!pickedEntity,
+          isString: typeof pickedEntity === 'string',
+          targetId: targetId,
+          startMMSI: targetId.startsWith("mmsi-"),
+          includesMMSI: targetId.includes("mmsi")
+        });
+
+        // Re-resolve the actual entity object if pickedEntity was magically returned as just a string geometry primitive ID
+        if (typeof entity === 'string') {
+          if (targetId.startsWith("fl-")) entity = flightsDataSourceRef.current?.entities.getById(targetId) || entity;
+          else if (targetId.startsWith("mmsi-")) entity = maritimeDataSourceRef.current?.entities.getById(targetId) || entity;
+          else if (targetId.startsWith("sat-")) entity = satellitesDataSourceRef.current?.entities.getById(targetId) || entity;
+          else if (targetId.startsWith("cctv-")) entity = cctvDataSourceRef.current?.entities.getById(targetId) || entity;
+        }
+
+        console.log("CLICKED ENTITY FOUND", pickedEntity, "Parsed targetId:", targetId);
+
         // Failsafe parameter extractor that guards against Cesium type-coercion/Prototype mutating crashes
         const extractVal = (prop: string, fallback: any = "") => {
-           if (!entity || !entity.properties || entity.properties[prop] === undefined) return fallback;
-           const field = entity.properties[prop];
-           if (typeof field.getValue === 'function') return field.getValue();
-           if (typeof field === 'object' && field._value !== undefined) return field._value;
-           return field; // Fallback to raw primitive if Cesium stripped prototype
+          if (!entity || !entity.properties) return fallback;
+          let field;
+          if (typeof entity.properties.hasProperty === 'function' && entity.properties.hasProperty(prop)) {
+            field = entity.properties[prop];
+          } else if (entity.properties[prop] !== undefined) {
+            field = entity.properties[prop];
+          } else {
+            return fallback;
+          }
+          const timeContext = viewerRef.current?.clock?.currentTime;
+          if (field && typeof field.getValue === 'function') return field.getValue(timeContext);
+          if (field && typeof field === 'object' && field._value !== undefined) return field._value;
+          return field !== undefined && field !== null ? field : fallback;
         };
-
-        if (entity.id?.startsWith("cctv-")) {
+        if (targetId.startsWith("cctv-")) {
           useAppStore.getState().setSelectedCCTV({
             id: extractVal("cctvId").toString(),
             name: extractVal("cctvName").toString()
           });
           useAppStore.getState().setSelectedFlight(null);
           useAppStore.getState().setSelectedSatellite(null);
-        } else if (entity.id?.startsWith("fl-")) {
+        } else if (targetId.startsWith("fl-")) {
           useAppStore.getState().setSelectedFlight({
             id: extractVal("flightId").toString() || extractVal("id", entity.id.replace("fl-", "")),
             callsign: extractVal("callsign").toString() || "UNKNOWN",
@@ -524,18 +536,81 @@ export default function MapViewer() {
           useAppStore.getState().setSelectedCCTV(null);
           useAppStore.getState().setSelectedSatellite(null);
           useAppStore.getState().setSelectedMaritime(null);
-        } else if (entity.id?.startsWith("mmsi-")) {
-          useAppStore.getState().setSelectedMaritime({
-            id: extractVal("mmsi").toString() || extractVal("id", entity.id.replace("mmsi-", "")),
-            type: extractVal("vesselType").toString() || "CARGO",
-            speed: parseFloat(extractVal("speed", 0)),
-            heading: parseFloat(extractVal("heading", 0))
-          });
+        } else if (targetId.startsWith("mmsi-") || targetId.includes("mmsi")) {
+          // Robust vessel property extraction with failsafe against missing property bags
+          let mmsiVal = targetId.replace("mmsi-", "");
+          let extractedName = `VESSEL ${mmsiVal}`;
+          let extractedSpeed = 0;
+          let extractedHeading = 0;
+          let extractedIMO = 0;
+          let extractedCallsign = "";
+          let extractedFlag = "🏳️";
+          let extractedTypeName = "UNKNOWN";
+          let extractedShipType = 0;
+          let extractedDestination = "";
+          let extractedColorHex = "#00CCFF";
+          let extractedNavStatusText = "";
+          let extractedNavStatusInt = 0;
+          let extractedLength = 0;
+          let extractedWidth = 0;
+          let extractedDraught = 0;
+
+          try {
+            mmsiVal = extractVal("mmsi", mmsiVal).toString();
+            extractedName = extractVal("vesselName", extractedName).toString();
+            extractedSpeed = parseFloat(extractVal("speed", 0) as string) || 0;
+            extractedHeading = parseFloat(extractVal("heading", 0) as string) || 0;
+            extractedIMO = parseInt(extractVal("imo", 0) as string) || 0;
+            extractedCallsign = extractVal("callsign", "").toString();
+            extractedFlag = extractVal("flag", "🏳️").toString();
+            extractedTypeName = extractVal("vesselType", "UNKNOWN").toString();
+            extractedShipType = parseInt(extractVal("shipType", 0) as string) || 0;
+            extractedDestination = extractVal("destination", "").toString();
+            extractedColorHex = extractVal("colorHex", "#00CCFF").toString();
+            extractedNavStatusText = extractVal("navStatusText", "").toString();
+            extractedNavStatusInt = parseInt(extractVal("navStatus", 0) as string) || 0;
+            extractedLength = parseFloat(extractVal("length", 0) as string) || 0;
+            extractedWidth = parseFloat(extractVal("width", 0) as string) || 0;
+            extractedDraught = parseFloat(extractVal("draught", 0) as string) || 0;
+          } catch (e) {
+            console.error("Failed to extract some maritime properties, using robust fallbacks", e);
+          }
+
+          const vesselRecord = {
+            mmsi: Number(mmsiVal) || 0,
+            name: extractedName,
+            imo: extractedIMO,
+            callsign: extractedCallsign,
+            flag: extractedFlag,
+            shipType: extractedShipType,
+            typeName: extractedTypeName,
+            id: String(mmsiVal),
+            type: extractedTypeName,
+            lat: 0,
+            lng: 0,
+            sog: extractedSpeed,
+            speed: extractedSpeed,
+            cog: extractedHeading,
+            heading: extractedHeading,
+            navStatus: extractedNavStatusInt,
+            navStatusText: extractedNavStatusText,
+            destination: extractedDestination,
+            eta: "",
+            draught: extractedDraught,
+            length: extractedLength,
+            width: extractedWidth,
+            colorHex: extractedColorHex,
+            lastUpdate: Date.now(),
+            simulated: true, // safe default
+          };
+
+          useAppStore.getState().setSelectedMaritime(vesselRecord as any);
           useAppStore.getState().setSelectedFlight(null);
           useAppStore.getState().setSelectedCCTV(null);
           useAppStore.getState().setSelectedSatellite(null);
-        } else if (entity.id?.startsWith("sat-")) {
-          const satId = extractVal("satId").toString() || entity.id.replace("sat-", "");
+          useAppStore.getState().setActivePOI(null);
+        } else if (targetId.startsWith("sat-")) {
+          const satId = extractVal("satId").toString() || targetId.replace("sat-", "");
           useAppStore.getState().setSelectedSatellite({
             id: satId,
             name: extractVal("satName").toString() || "CLASSIFIED",
@@ -547,34 +622,166 @@ export default function MapViewer() {
           useAppStore.getState().setSelectedCCTV(null);
           useAppStore.getState().setSelectedMaritime(null);
           requestOrbitPrediction(parseInt(satId, 10));
-        } else if (entity.id?.startsWith("business_")) {
+        } else if (targetId.startsWith("business_")) {
           // Trigger External Deployment (Direct Web Link)
-          const cityKey = entity.id.replace("business_", "");
+          const cityKey = targetId.replace("business_", "");
           useAppStore.getState().setActivePOI(cityKey as any);
-          
+
           const website = CITY_INTEL[cityKey]?.commercial?.website;
           if (website) {
             window.open(website, "_blank");
           }
-        } else if (entity.id?.startsWith("realEstate_")) {
+        } else if (targetId.startsWith("realEstate_")) {
           // Open Premium Asser View
-          const cityKey = entity.id.replace("realEstate_", "");
+          const cityKey = targetId.replace("realEstate_", "");
           useAppStore.getState().setActivePOI(cityKey as any);
           useAppStore.getState().setShowRealEstateModal(true);
         }
-      } else {
-        // Did not hit any asset
       }
     };
-    
+
+    const processHover = (movement: any) => {
+      let entity: any = null;
+
+      // 1. Standard pick
+      const pickedObject = viewerRef.current.scene.pick(movement.endPosition);
+      if (Cesium.defined(pickedObject) && pickedObject.id) {
+        const candidate = pickedObject.id;
+        const cId = typeof candidate === 'string' ? candidate :
+          typeof candidate.id === 'string' ? candidate.id :
+            (candidate.id && candidate.id.id) ? candidate.id.id : '';
+        if (cId.startsWith("mmsi-") || cId.startsWith("fl-") || cId.startsWith("cctv-") || cId.startsWith("sat-") || cId.includes("business_") || cId.includes("realEstate_")) {
+          entity = candidate;
+        }
+      }
+
+      if (entity) {
+        // Change cursor to pointer for feedback
+        viewerRef.current.container.style.cursor = 'pointer';
+
+        let targetId = typeof entity === 'string' ? entity :
+          typeof entity.id === 'string' ? entity.id :
+            (entity.id && entity.id.id) ? entity.id.id : String(entity.id || "");
+
+        // Re-resolve entity object if it was returned as a raw string ID
+        if (typeof entity === 'string') {
+          if (targetId.startsWith("mmsi-")) entity = maritimeDataSourceRef.current?.entities.getById(targetId) || entity;
+          else if (targetId.startsWith("fl-")) entity = flightsDataSourceRef.current?.entities.getById(targetId) || entity;
+        }
+
+        // ── Flight Hover ──
+        if (targetId.startsWith("fl-")) {
+          const extractVal = (prop: string, fallback: any = "") => {
+            if (!entity || !entity.properties) return fallback;
+            let field;
+            if (typeof entity.properties.hasProperty === 'function' && entity.properties.hasProperty(prop)) {
+              field = entity.properties[prop];
+            } else if (entity.properties[prop] !== undefined) {
+              field = entity.properties[prop];
+            } else {
+              return fallback;
+            }
+            const timeContext = viewerRef.current?.clock?.currentTime;
+            if (field && typeof field.getValue === 'function') return field.getValue(timeContext);
+            if (field && typeof field === 'object' && field._value !== undefined) return field._value;
+            return field !== undefined && field !== null ? field : fallback;
+          };
+
+          const flightRecord = {
+            id: extractVal("flightId", targetId.replace("fl-", "")).toString(),
+            callsign: extractVal("callsign", "UNKNOWN").toString(),
+            origin: extractVal("origin", "UNKNOWN").toString(),
+            airline: extractVal("airline", "UNKNOWN").toString(),
+            alt: Math.round(parseFloat(extractVal("alt", 0))),
+            mach: parseFloat(extractVal("mach", 0)),
+          };
+
+          if (useAppStore.getState().hoveredFlight?.id !== flightRecord.id) {
+            useAppStore.getState().setHoveredFlight(flightRecord);
+          }
+          // Clear maritime hover if we're now hovering a flight
+          if (useAppStore.getState().hoveredMaritime) {
+            useAppStore.getState().setHoveredMaritime(null);
+          }
+          return;
+        }
+
+        // ── Maritime Hover ──
+        if (targetId.startsWith("mmsi-")) {
+          const extractVal = (prop: string, fallback: any = "") => {
+            if (!entity || !entity.properties) return fallback;
+            let field;
+            if (typeof entity.properties.hasProperty === 'function' && entity.properties.hasProperty(prop)) {
+              field = entity.properties[prop];
+            } else if (entity.properties[prop] !== undefined) {
+              field = entity.properties[prop];
+            } else {
+              return fallback;
+            }
+            const timeContext = viewerRef.current?.clock?.currentTime;
+            if (field && typeof field.getValue === 'function') return field.getValue(timeContext);
+            if (field && typeof field === 'object' && field._value !== undefined) return field._value;
+            return field !== undefined && field !== null ? field : fallback;
+          };
+
+          const mmsiVal = extractVal("mmsi") || targetId.replace("mmsi-", "");
+          const vesselRecord = {
+            mmsi: Number(mmsiVal) || 0,
+            name: extractVal("vesselName") || `VESSEL ${mmsiVal}`,
+            imo: Number(extractVal("imo")) || 0,
+            callsign: extractVal("callsign") || "",
+            flag: extractVal("flag") || "🏳️",
+            shipType: Number(extractVal("shipType")) || 0,
+            typeName: extractVal("vesselType") || "UNKNOWN",
+            lat: 0,
+            lng: 0,
+            sog: parseFloat(extractVal("speed", 0)),
+            cog: parseFloat(extractVal("heading", 0)),
+            heading: parseFloat(extractVal("heading", 0)),
+            navStatus: parseInt(extractVal("navStatus", 0)) || 0,
+            navStatusText: extractVal("navStatusText") || "",
+            destination: extractVal("destination") || "",
+            eta: "",
+            draught: parseFloat(extractVal("draught", 0)),
+            length: parseFloat(extractVal("length", 0)),
+            width: parseFloat(extractVal("width", 0)),
+            colorHex: extractVal("colorHex") || "#00CCFF",
+            lastUpdate: Date.now(),
+            simulated: extractVal("simulated") === 1,
+          };
+
+          if (useAppStore.getState().hoveredMaritime?.mmsi !== vesselRecord.mmsi) {
+            useAppStore.getState().setHoveredMaritime(vesselRecord as any);
+          }
+          // Clear flight hover if we're now hovering maritime
+          if (useAppStore.getState().hoveredFlight) {
+            useAppStore.getState().setHoveredFlight(null);
+          }
+          return;
+        }
+      } else {
+        // Reset cursor
+        viewerRef.current.container.style.cursor = '';
+      }
+
+      // Clear both hovers when not over any entity
+      if (useAppStore.getState().hoveredMaritime) {
+        useAppStore.getState().setHoveredMaritime(null);
+      }
+      if (useAppStore.getState().hoveredFlight) {
+        useAppStore.getState().setHoveredFlight(null);
+      }
+    };
+
     // Bind to both Single Tap and Double Tap mechanics
     handler.setInputAction(processInteraction, Cesium.ScreenSpaceEventType.LEFT_CLICK);
     handler.setInputAction(processInteraction, Cesium.ScreenSpaceEventType.LEFT_DOUBLE_CLICK);
+    handler.setInputAction(processHover, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
 
     return () => {
       handler.destroy();
     };
-  }, []);
+  }, [viewerReady]);
 
   // Targeting HUD Screen Coordinate Sync
   useEffect(() => {
@@ -597,12 +804,12 @@ export default function MapViewer() {
       const currentFlightPos = useAppStore.getState().flightScreenPos;
       if (flightPos) {
         if (!currentFlightPos || Math.abs(currentFlightPos.x - flightPos.x) > 1 || Math.abs(currentFlightPos.y - flightPos.y) > 1) {
-             useAppStore.getState().setFlightScreenPos({ x: flightPos.x, y: flightPos.y });
+          useAppStore.getState().setFlightScreenPos({ x: flightPos.x, y: flightPos.y });
         }
       } else if (currentFlightPos !== null) {
-         useAppStore.getState().setFlightScreenPos(null);
+        useAppStore.getState().setFlightScreenPos(null);
       }
-      
+
       // 2. Satellite Screen Tracking
       const selectedSatellite = useAppStore.getState().selectedSatellite;
       let satPos = null;
@@ -611,17 +818,17 @@ export default function MapViewer() {
         if (entity && entity.position) {
           const position = entity.position.getValue(viewerRef.current.clock.currentTime);
           if (position) {
-             satPos = Cesium.SceneTransforms.worldToWindowCoordinates(viewerRef.current.scene, position);
+            satPos = Cesium.SceneTransforms.worldToWindowCoordinates(viewerRef.current.scene, position);
           }
         }
       }
       const currentSatPos = useAppStore.getState().satelliteScreenPos;
       if (satPos) {
         if (!currentSatPos || Math.abs(currentSatPos.x - satPos.x) > 1 || Math.abs(currentSatPos.y - satPos.y) > 1) {
-             useAppStore.getState().setSatelliteScreenPos({ x: satPos.x, y: satPos.y });
+          useAppStore.getState().setSatelliteScreenPos({ x: satPos.x, y: satPos.y });
         }
       } else if (currentSatPos !== null) {
-         useAppStore.getState().setSatelliteScreenPos(null);
+        useAppStore.getState().setSatelliteScreenPos(null);
       }
 
       // 3. CCTV Screen Tracking
@@ -639,17 +846,19 @@ export default function MapViewer() {
       const currentCctvPos = useAppStore.getState().cctvScreenPos;
       if (cctvPos) {
         if (!currentCctvPos || Math.abs(currentCctvPos.x - cctvPos.x) > 1 || Math.abs(currentCctvPos.y - cctvPos.y) > 1) {
-             useAppStore.getState().setCctvScreenPos({ x: cctvPos.x, y: cctvPos.y });
+          useAppStore.getState().setCctvScreenPos({ x: cctvPos.x, y: cctvPos.y });
         }
       } else if (currentCctvPos !== null) {
-         useAppStore.getState().setCctvScreenPos(null);
+        useAppStore.getState().setCctvScreenPos(null);
       }
 
       // 4. Maritime Screen Tracking
       const selectedMaritime = useAppStore.getState().selectedMaritime;
       let maritimePos = null;
       if (selectedMaritime && maritimeDataSourceRef.current) {
-        const entity = maritimeDataSourceRef.current.entities.getById(`mmsi-${selectedMaritime.id}`);
+        // we use either selectedMaritime.mmsi or fallback to id
+        const mmsiTarget = selectedMaritime.mmsi;
+        const entity = maritimeDataSourceRef.current.entities.getById(`mmsi-${mmsiTarget}`);
         if (entity && entity.position) {
           const position = entity.position.getValue(viewerRef.current.clock.currentTime);
           if (position) {
@@ -660,10 +869,32 @@ export default function MapViewer() {
       const currentMaritimePos = useAppStore.getState().maritimeScreenPos;
       if (maritimePos) {
         if (!currentMaritimePos || Math.abs(currentMaritimePos.x - maritimePos.x) > 1 || Math.abs(currentMaritimePos.y - maritimePos.y) > 1) {
-             useAppStore.getState().setMaritimeScreenPos({ x: maritimePos.x, y: maritimePos.y });
+          useAppStore.getState().setMaritimeScreenPos({ x: maritimePos.x, y: maritimePos.y });
         }
       } else if (currentMaritimePos !== null) {
-         useAppStore.getState().setMaritimeScreenPos(null);
+        useAppStore.getState().setMaritimeScreenPos(null);
+      }
+
+      // 5. Maritime Hover Screen Tracking
+      const hoveredMaritime = useAppStore.getState().hoveredMaritime;
+      let maritimeHoverPos = null;
+      if (hoveredMaritime && maritimeDataSourceRef.current) {
+        const mmsiTarget = hoveredMaritime.mmsi;
+        const entity = maritimeDataSourceRef.current.entities.getById(`mmsi-${mmsiTarget}`);
+        if (entity && entity.position) {
+          const position = entity.position.getValue(viewerRef.current.clock.currentTime);
+          if (position) {
+            maritimeHoverPos = Cesium.SceneTransforms.worldToWindowCoordinates(viewerRef.current.scene, position);
+          }
+        }
+      }
+      const currentMaritimeHoverPos = useAppStore.getState().maritimeHoverScreenPos;
+      if (maritimeHoverPos) {
+        if (!currentMaritimeHoverPos || Math.abs(currentMaritimeHoverPos.x - maritimeHoverPos.x) > 1 || Math.abs(currentMaritimeHoverPos.y - maritimeHoverPos.y) > 1) {
+          useAppStore.getState().setMaritimeHoverScreenPos({ x: maritimeHoverPos.x, y: maritimeHoverPos.y });
+        }
+      } else if (currentMaritimeHoverPos !== null) {
+        useAppStore.getState().setMaritimeHoverScreenPos(null);
       }
     };
 
@@ -671,7 +902,7 @@ export default function MapViewer() {
 
     return () => {
       if (viewerRef.current && !viewerRef.current.isDestroyed()) {
-         viewerRef.current.scene.preRender.removeEventListener(preRenderListener);
+        viewerRef.current.scene.preRender.removeEventListener(preRenderListener);
       }
     };
   }, [viewerReady]);
@@ -681,39 +912,52 @@ export default function MapViewer() {
     const Cesium = (window as any).Cesium;
     if (layers.traffic && viewerRef.current && Cesium && trafficDataSourceRef.current) {
       trafficDataSourceRef.current.show = true;
-      
+
       const fetchTrafficVectors = async () => {
         // Prevent refetching if already populated
         if (trafficDataSourceRef.current.entities.values.length > 0) return;
 
         try {
-          // Fetch real National highway topology via Overpass API (using LZ4 faster instance)
-          const overpassQuery = `[out:json][timeout:60];way["highway"="motorway"](-35.0,16.0,-22.0,33.0);out geom;`;
-          const res = await fetch(`https://lz4.overpass-api.de/api/interpreter?data=${encodeURIComponent(overpassQuery)}`);
-          if (!res.ok) throw new Error("Overpass API failed");
+          // Use the server-side proxy to avoid CORS restrictions and leverage mirror fallback
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 35_000); // 35s client-side safety net
+          let res: Response;
+          try {
+            res = await fetch(`/api/traffic`, { signal: controller.signal });
+          } finally {
+            clearTimeout(timeoutId);
+          }
+
+          if (!res.ok) throw new Error(`Traffic proxy returned HTTP ${res.status}`);
           const data = await res.json();
-          
+
+          // Graceful degradation: if all mirrors failed upstream, data.elements will be []
+          if (!data?.elements?.length) {
+            console.warn('[MapViewer] Traffic layer: no road vectors returned – layer hidden until retry.');
+            return;
+          }
+
           if (data && data.elements) {
             data.elements.forEach((way: any) => {
               if (way.geometry && way.geometry.length > 1) {
                 const degreesArray = way.geometry.flatMap((pt: any) => [pt.lon, pt.lat]);
-                
+
                 // Deterministic mockup of traffic density using OpenStreetMap node ID modulo
                 const trafficDensity = way.id % 3;
                 let strokeColor = Cesium.Color.fromCssColorString("#00F0FF").withAlpha(0.7); // Light Flow (Cyan)
                 if (trafficDensity === 1) strokeColor = Cesium.Color.fromCssColorString("#FF0055").withAlpha(0.9); // Moderate Flow (Magenta)
                 else if (trafficDensity === 2) strokeColor = Cesium.Color.fromCssColorString("#9D00FF").withAlpha(1.0); // Congested Flow (Neon Purple)
-                
+
                 trafficDataSourceRef.current.entities.add({
                   polyline: {
                     positions: Cesium.Cartesian3.fromDegreesArray(degreesArray),
                     width: trafficDensity === 2 ? 12 : 8,
                     material: new Cesium.PolylineDashMaterialProperty({
                       color: new Cesium.CallbackProperty((time: any) => {
-                         const seconds = Cesium.JulianDate.toDate(time).getTime() / 1000.0;
-                         // Pulse effect varying slightly by highway density
-                         const pulse = 0.6 + 0.4 * Math.sin(seconds * (3.0 + trafficDensity * 1.5) + way.id);
-                         return strokeColor.withAlpha(pulse);
+                        const seconds = Cesium.JulianDate.toDate(time).getTime() / 1000.0;
+                        // Pulse effect varying slightly by highway density
+                        const pulse = 0.6 + 0.4 * Math.sin(seconds * (3.0 + trafficDensity * 1.5) + way.id);
+                        return strokeColor.withAlpha(pulse);
                       }, false),
                       gapColor: Cesium.Color.TRANSPARENT,
                       dashLength: 40.0 + trafficDensity * 20.0,
@@ -725,11 +969,15 @@ export default function MapViewer() {
               }
             });
           }
-        } catch (e) {
-          console.error("Traffic vector fetch failed:", e);
+        } catch (e: any) {
+          if (e?.name === 'AbortError') {
+            console.warn('[MapViewer] Traffic layer: request timed out – will retry on next layer toggle.');
+          } else {
+            console.warn('[MapViewer] Traffic layer: fetch failed gracefully –', e?.message ?? e);
+          }
         }
       };
-      
+
       fetchTrafficVectors();
     } else if (trafficDataSourceRef.current) {
       trafficDataSourceRef.current.show = false;
@@ -740,139 +988,139 @@ export default function MapViewer() {
   useEffect(() => {
     const Cesium = (window as any).Cesium;
     if (!Cesium || !viewerRef.current || !flightsDataSourceRef.current) return;
-    
+
     if (!flightTelemetry) {
       if (flightsDataSourceRef.current) flightsDataSourceRef.current.show = layers.flights;
       return;
     }
-    
+
     flightsDataSourceRef.current.show = layers.flights;
     const entities = flightsDataSourceRef.current.entities;
-      
-      const { buffer, meta, timestamp } = flightTelemetry;
-      const STRIDE = 6;
-      const count = buffer.length / STRIDE;
-      
-      const time = Cesium.JulianDate.fromDate(new Date(timestamp * 1000));
-      // Ensure the viewer clock runs normally to animate sampled positions
-      if (!viewerRef.current.clock.shouldAnimate) {
-        viewerRef.current.clock.shouldAnimate = true;
-      }
-      
-      const currentIds = new Set<string>();
-      
-      entities.suspendEvents();
 
-      for (let i = 0; i < count; i++) {
-        const offset = i * STRIDE;
-        const idInt = buffer[offset];
-        const stringId = `fl-${idInt}`;
-        currentIds.add(stringId);
+    const { buffer, meta, timestamp } = flightTelemetry;
+    const STRIDE = 6;
+    const count = buffer.length / STRIDE;
 
-        const lng = buffer[offset + 1];
-        const lat = buffer[offset + 2];
-        const alt = buffer[offset + 3];
-        const vel = buffer[offset + 4];
-        const track = buffer[offset + 5];
-        const callsign = meta[idInt]?.callsign || "UNKNOWN";
-        const origin = meta[idInt]?.origin_country || "UNKNOWN";
-        const airline = meta[idInt]?.airline || "PRIVATE / UNKNOWN";
-        const mach = (vel / 340.3).toFixed(2);
+    const time = Cesium.JulianDate.fromDate(new Date(timestamp * 1000));
+    // Ensure the viewer clock runs normally to animate sampled positions
+    if (!viewerRef.current.clock.shouldAnimate) {
+      viewerRef.current.clock.shouldAnimate = true;
+    }
 
-        const position = Cesium.Cartesian3.fromDegrees(lng, lat, alt);
-        
-        // Tactical Contrail Color: Below 10,000ft ~ 3048m Gold, Above Obsidian Blue / Cyan
-        const trailColor = alt < 3048 
-            ? Cesium.Color.fromCssColorString('#FFD700').withAlpha(0.8) 
-            : Cesium.Color.fromCssColorString('#00FFFF').withAlpha(0.5);
+    const currentIds = new Set<string>();
 
-        let entity = entities.getById(stringId);
+    entities.suspendEvents();
 
-        if (!entity) {
-          const positionProperty = new Cesium.SampledPositionProperty();
-          positionProperty.setInterpolationOptions({
-            interpolationDegree: 3,
-            interpolationAlgorithm: Cesium.HermitePolynomialApproximation
-          });
-          positionProperty.forwardExtrapolationType = Cesium.ExtrapolationType.EXTRAPOLATE;
-          positionProperty.forwardExtrapolationDuration = 3600; // Allow up to 1h drift for flights
-          positionProperty.backwardExtrapolationType = Cesium.ExtrapolationType.HOLD;
-          positionProperty.backwardExtrapolationDuration = Number.POSITIVE_INFINITY;
+    for (let i = 0; i < count; i++) {
+      const offset = i * STRIDE;
+      const idInt = buffer[offset];
+      const stringId = `fl-${idInt}`;
+      currentIds.add(stringId);
 
-          entity = entities.add({
-            id: stringId,
-            position: positionProperty,
-            // Macro View (Billboard / SVG Icon)
-            billboard: {
-              image: AIRPLANE_SVG,
-              scaleByDistance: new Cesium.NearFarScalar(2000.0, 0.4, 8000000.0, 0.15),
-              rotation: -Cesium.Math.toRadians(track || 0)
-            },
-            // Massive Hitbox Element
-            point: {
-              pixelSize: 40,
-              color: new Cesium.Color(0,0,0,0.01)
-            },
-            // Contrail Path (Amplified)
-            path: {
-              resolution: 1,
-              leadTime: 10,
-              trailTime: 300, 
-              width: 8,
-              distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, Number.POSITIVE_INFINITY)
-            },
-            properties: new Cesium.PropertyBag({ flightId: idInt, callsign: callsign, origin: origin, airline: airline, alt: alt, mach: mach })
-          });
-          
-          entity.path.material = new Cesium.PolylineGlowMaterialProperty({
-              glowPower: 0.35,
-              color: trailColor
-          });
-        }
+      const lng = buffer[offset + 1];
+      const lat = buffer[offset + 2];
+      const alt = buffer[offset + 3];
+      const vel = buffer[offset + 4];
+      const track = buffer[offset + 5];
+      const callsign = meta[idInt]?.callsign || "UNKNOWN";
+      const origin = meta[idInt]?.origin_country || "UNKNOWN";
+      const airline = meta[idInt]?.airline || "PRIVATE / UNKNOWN";
+      const mach = (vel / 340.3).toFixed(2);
 
-        entity.position.addSample(time, position);
-        
-        // Safely update or initialize properties without breaking Cesium Property prototypes
-        if (!entity.properties) entity.properties = new Cesium.PropertyBag();
-        
-        const updateProp = (key: string, val: any) => {
-            if (entity.properties.hasProperty(key)) {
-                // IMPORTANT: Only trigger setValue if changed to prevent 9,000+ definitionChanged events from freezing the Scene
-                const currentVal = entity.properties[key].getValue();
-                if (currentVal !== val) {
-                    entity.properties[key].setValue(val);
-                }
-            } else {
-                entity.properties.addProperty(key, val);
-            }
-        };
-        
-        updateProp('callsign', callsign);
-        updateProp('origin', origin);
-        updateProp('airline', airline);
-        updateProp('alt', alt);
-        updateProp('mach', mach);
-        updateProp('flightId', idInt);
-        
-        if (entity.billboard) {
-          entity.billboard.rotation = -Cesium.Math.toRadians(track);
-        }
-        
-        if (entity.path && entity.path.material && entity.path.material.color) {
-           entity.path.material.color = trailColor;
-        }
+      const position = Cesium.Cartesian3.fromDegrees(lng, lat, alt);
+
+      // Tactical Contrail Color: Below 10,000ft ~ 3048m Gold, Above Obsidian Blue / Cyan
+      const trailColor = alt < 3048
+        ? Cesium.Color.fromCssColorString('#FFD700').withAlpha(0.8)
+        : Cesium.Color.fromCssColorString('#00FFFF').withAlpha(0.5);
+
+      let entity = entities.getById(stringId);
+
+      if (!entity) {
+        const positionProperty = new Cesium.SampledPositionProperty();
+        positionProperty.setInterpolationOptions({
+          interpolationDegree: 3,
+          interpolationAlgorithm: Cesium.HermitePolynomialApproximation
+        });
+        positionProperty.forwardExtrapolationType = Cesium.ExtrapolationType.EXTRAPOLATE;
+        positionProperty.forwardExtrapolationDuration = 3600; // Allow up to 1h drift for flights
+        positionProperty.backwardExtrapolationType = Cesium.ExtrapolationType.HOLD;
+        positionProperty.backwardExtrapolationDuration = Number.POSITIVE_INFINITY;
+
+        entity = entities.add({
+          id: stringId,
+          position: positionProperty,
+          // Macro View (Billboard / SVG Icon)
+          billboard: {
+            image: AIRPLANE_SVG,
+            scaleByDistance: new Cesium.NearFarScalar(2000.0, 0.4, 8000000.0, 0.15),
+            rotation: -Cesium.Math.toRadians(track || 0)
+          },
+          // Massive Hitbox Element
+          point: {
+            pixelSize: 40,
+            color: new Cesium.Color(0, 0, 0, 0.01)
+          },
+          // Contrail Path (Amplified)
+          path: {
+            resolution: 1,
+            leadTime: 10,
+            trailTime: 300,
+            width: 8,
+            distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, Number.POSITIVE_INFINITY)
+          },
+          properties: new Cesium.PropertyBag({ flightId: idInt, callsign: callsign, origin: origin, airline: airline, alt: alt, mach: mach })
+        });
+
+        entity.path.material = new Cesium.PolylineGlowMaterialProperty({
+          glowPower: 0.35,
+          color: trailColor
+        });
       }
 
-      // Cleanup stale flights (no longer received in buffer)
-      const entitiesToRemove: any[] = [];
-      entities.values.forEach((entity: any) => {
-        if (entity.id.startsWith('fl-') && !currentIds.has(entity.id)) {
-          entitiesToRemove.push(entity);
+      entity.position.addSample(time, position);
+
+      // Safely update or initialize properties without breaking Cesium Property prototypes
+      if (!entity.properties) entity.properties = new Cesium.PropertyBag();
+
+      const updateProp = (key: string, val: any) => {
+        if (entity.properties.hasProperty(key)) {
+          // IMPORTANT: Only trigger setValue if changed to prevent 9,000+ definitionChanged events from freezing the Scene
+          const currentVal = entity.properties[key].getValue();
+          if (currentVal !== val) {
+            entity.properties[key].setValue(val);
+          }
+        } else {
+          entity.properties.addProperty(key, val);
         }
-      });
-      entitiesToRemove.forEach((e: any) => entities.remove(e));
-      
-      entities.resumeEvents();
+      };
+
+      updateProp('callsign', callsign);
+      updateProp('origin', origin);
+      updateProp('airline', airline);
+      updateProp('alt', alt);
+      updateProp('mach', mach);
+      updateProp('flightId', idInt);
+
+      if (entity.billboard) {
+        entity.billboard.rotation = -Cesium.Math.toRadians(track);
+      }
+
+      if (entity.path && entity.path.material && entity.path.material.color) {
+        entity.path.material.color = trailColor;
+      }
+    }
+
+    // Cleanup stale flights (no longer received in buffer)
+    const entitiesToRemove: any[] = [];
+    entities.values.forEach((entity: any) => {
+      if (entity.id.startsWith('fl-') && !currentIds.has(entity.id)) {
+        entitiesToRemove.push(entity);
+      }
+    });
+    entitiesToRemove.forEach((e: any) => entities.remove(e));
+
+    entities.resumeEvents();
 
     // No else if needed because we unconditionally update the data and sync show state above.
   }, [layers.flights, flightTelemetry]);
@@ -890,7 +1138,7 @@ export default function MapViewer() {
       const STRIDE = 4;
       const count = buffer.length / STRIDE;
       const time = Cesium.JulianDate.fromDate(new Date(timestamp * 1000));
-      
+
       if (!viewerRef.current.clock.shouldAnimate) {
         viewerRef.current.clock.shouldAnimate = true;
       }
@@ -905,26 +1153,26 @@ export default function MapViewer() {
 
         const lng = buffer[offset + 1];
         const lat = buffer[offset + 2];
-        const alt = buffer[offset + 3]; 
-        
+        const alt = buffer[offset + 3];
+
         const satMeta = meta && meta[idInt] ? meta[idInt] : { name: `UNKNOWN-${idInt}`, apogee: 0, perigee: 0, inc: 0 };
         const position = Cesium.Cartesian3.fromDegrees(lng, lat, alt);
 
         let entity = entities.getById(stringId);
-        
+
         // Custom styling based on satellite metadata name
         const isStarlink = satMeta.name.includes("STARLINK");
         const isISS = satMeta.name.includes("ISS") || satMeta.name.includes("ZARYA");
-        
+
         let satColor = Cesium.Color.fromCssColorString('#00FF00'); // Generic Green
         let footprintColor = Cesium.Color.fromCssColorString('#00FF00').withAlpha(0.05);
 
         if (isStarlink) {
-            satColor = Cesium.Color.fromCssColorString('#00FFFF'); // Cyber Cyan
-            footprintColor = Cesium.Color.fromCssColorString('#00FFFF').withAlpha(0.02);
+          satColor = Cesium.Color.fromCssColorString('#00FFFF'); // Cyber Cyan
+          footprintColor = Cesium.Color.fromCssColorString('#00FFFF').withAlpha(0.02);
         } else if (isISS) {
-            satColor = Cesium.Color.fromCssColorString('#FFD700'); // Gold
-            footprintColor = Cesium.Color.fromCssColorString('#FFD700').withAlpha(0.1);
+          satColor = Cesium.Color.fromCssColorString('#FFD700'); // Gold
+          footprintColor = Cesium.Color.fromCssColorString('#FFD700').withAlpha(0.1);
         }
 
         if (!entity) {
@@ -950,14 +1198,14 @@ export default function MapViewer() {
             },
             point: {
               pixelSize: 40,
-              color: new Cesium.Color(0,0,0,0.01)
+              color: new Cesium.Color(0, 0, 0, 0.01)
             },
-            properties: new Cesium.PropertyBag({ 
-              satId: idInt, 
+            properties: new Cesium.PropertyBag({
+              satId: idInt,
               satName: satMeta.name,
               apogee: satMeta.apogee,
               perigee: satMeta.perigee,
-              inc: satMeta.inc 
+              inc: satMeta.inc
             })
           });
         }
@@ -965,11 +1213,11 @@ export default function MapViewer() {
         entity.position.addSample(time, position);
         if (!entity.properties) entity.properties = new Cesium.PropertyBag();
         if (!entity.properties.hasProperty('satName')) {
-            entity.properties.addProperty('satName', satMeta.name);
-            entity.properties.addProperty('apogee', satMeta.apogee);
-            entity.properties.addProperty('perigee', satMeta.perigee);
-            entity.properties.addProperty('inc', satMeta.inc);
-            entity.properties.addProperty('satId', idInt);
+          entity.properties.addProperty('satName', satMeta.name);
+          entity.properties.addProperty('apogee', satMeta.apogee);
+          entity.properties.addProperty('perigee', satMeta.perigee);
+          entity.properties.addProperty('inc', satMeta.inc);
+          entity.properties.addProperty('satId', idInt);
         }
       }
 
@@ -990,8 +1238,8 @@ export default function MapViewer() {
 
     // If there is no active orbit prediction, or we clicked off the satellite, remove the ring entirely
     if (!orbitPrediction || !selectedSatellite || orbitPrediction.noradId.toString() !== selectedSatellite.id) {
-        if (predEntity) viewerRef.current.entities.remove(predEntity);
-        return;
+      if (predEntity) viewerRef.current.entities.remove(predEntity);
+      return;
     }
 
     // Connect predictive Cartesian points globally manually, independent of the moving entity
@@ -1045,89 +1293,104 @@ export default function MapViewer() {
   useEffect(() => {
     const Cesium = (window as any).Cesium;
     if (!Cesium || !maritimeDataSourceRef.current) return;
-    
+
     maritimeDataSourceRef.current.show = layers.maritime;
-    if (!maritimeTelemetry) return;
+    if (!maritimeTelemetry || maritimeTelemetry.size === 0) return;
+
+    // Ensure viewer clock is animating
+    if (viewerRef.current && !viewerRef.current.clock.shouldAnimate) {
+      viewerRef.current.clock.shouldAnimate = true;
+    }
 
     const entities = maritimeDataSourceRef.current.entities;
-    const { buffer, timestamp } = maritimeTelemetry;
-    const STRIDE = 7;
-    const count = buffer.length / STRIDE;
-    const time = Cesium.JulianDate.fromDate(new Date(timestamp * 1000));
-    
     entities.suspendEvents();
 
-    for (let i = 0; i < count; i++) {
-        const offset = i * STRIDE;
-        const idInt = buffer[offset + 0];
-        const stringId = `mmsi-${idInt}`;
-        const lng = buffer[offset + 1];
-        const lat = buffer[offset + 2];
-        const heading = buffer[offset + 4];
-        
-        // Extract 24-bit RGB color from the Float32Array
-        const colorValue = buffer[offset + 6] || 0x00FFFF;
-        const colorHex = '#' + Math.floor(colorValue).toString(16).padStart(6, '0');
-        const SHIP_SVG = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="${colorHex}" width="64" height="64"><path stroke="#000000" stroke-width="12" d="M256 0l256 512-256-128-256 128z"/></svg>`);
-        
-        const position = Cesium.Cartesian3.fromDegrees(lng, lat, 0);
-        let entity = entities.getById(stringId);
+    const currentIds = new Set<string>();
 
-        if (!entity) {
-          const positionProperty = new Cesium.SampledPositionProperty();
-          positionProperty.setInterpolationOptions({
-            interpolationDegree: 2,
-            interpolationAlgorithm: Cesium.LinearApproximation
-          });
-          positionProperty.forwardExtrapolationType = Cesium.ExtrapolationType.EXTRAPOLATE;
-          positionProperty.forwardExtrapolationDuration = 30;
+    // maritimeTelemetry is Map<mmsi, VesselRecord> — iterate directly
+    maritimeTelemetry.forEach((vessel) => {
+      const { mmsi, lat, lng, sog, heading, colorHex, shipType } = vessel;
+      if (!lat || !lng || lat === 0 || lng === 0) return;
 
-          entity = entities.add({
-            id: stringId,
-            position: positionProperty,
-            billboard: {
-              image: SHIP_SVG,
-              scaleByDistance: new Cesium.NearFarScalar(2000.0, 0.4, 8000000.0, 0.15),
-              rotation: -Cesium.Math.toRadians(heading || 0)
-            },
-            point: {
-              pixelSize: 40,
-              color: new Cesium.Color(0,0,0,0.01)
-            },
-            path: {
-              resolution: 5,
-              leadTime: 0,
-              trailTime: 1200, // Very long wake for ships
-              width: 8,
-              material: new Cesium.PolylineGlowMaterialProperty({
-                  glowPower: 0.15,
-                  taperPower: 1,
-                  color: Cesium.Color.fromCssColorString(colorHex).withAlpha(0.2)
-              }),
-              distanceDisplayCondition: new Cesium.DistanceDisplayCondition(0.0, Number.POSITIVE_INFINITY)
-            }
-          });
-        }
-        
-        if (!entity.properties) entity.properties = new Cesium.PropertyBag();
-        if (!entity.properties.hasProperty('mmsi')) {
-            entity.properties.addProperty('mmsi', idInt);
-            entity.properties.addProperty('vesselType', "CARGO"); // Default fallback
-            entity.properties.addProperty('speed', 12.5); // Default fallback
-            entity.properties.addProperty('heading', heading || 0);
+      const stringId = `mmsi-${mmsi}`;
+      currentIds.add(stringId);
+
+      // Build a colored ship SVG from the vessel's real type color
+      const safeColor = colorHex || '#00CCFF';
+      // Sleek angular navigation chevron matching reference
+      const SHIP_SVG = 'data:image/svg+xml;base64,' + btoa(
+        `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${safeColor}" width="42" height="42">` +
+        `<path d="M12 2 L22 22 L12 18 L2 22 Z" stroke="#000000" stroke-width="1.5" stroke-linejoin="round"/>` +
+        `</svg>`
+      );
+
+      // Elevate slightly above the ellipsoid to prevent z-fighting with the ocean floor
+      const cartesian = Cesium.Cartesian3.fromDegrees(lng, lat, 250);
+      let entity = entities.getById(stringId);
+
+      if (!entity) {
+        entity = entities.add({
+          id: stringId,
+          position: cartesian,
+          billboard: {
+            image: SHIP_SVG,
+            // Removed CLAMP_TO_GROUND since it causes vanishing when depth test is enabled on flat ellipsoid
+            scaleByDistance: new Cesium.NearFarScalar(500.0, 1.2, 10000000.0, 0.5),
+            eyeOffset: new Cesium.Cartesian3(0, 0, -50), // Pull slightly towards camera
+            rotation: -Cesium.Math.toRadians(heading || 0),
+            verticalOrigin: Cesium.VerticalOrigin.CENTER,
+            horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+          },
+          // Massive Hitbox Element for Hardware-Accelerated Picking
+          point: {
+            pixelSize: 35,
+            color: new Cesium.Color(0, 0, 0, 0.01)
+          },
+        });
+      } else {
+        entity.position.setValue(cartesian);
+      }
+
+      if (entity.billboard) {
+        entity.billboard.rotation = -Cesium.Math.toRadians(heading || 0);
+      }
+
+      // Store the full VesselRecord on the entity so clicking gives rich data
+      if (!entity.properties) entity.properties = new Cesium.PropertyBag();
+      const upsertProp = (key: string, val: any) => {
+        if (entity!.properties.hasProperty(key)) {
+          if (entity!.properties[key].getValue() !== val) entity!.properties[key].setValue(val);
         } else {
-            const currentHeading = entity.properties.heading.getValue();
-            if (currentHeading !== (heading || 0)) {
-                entity.properties.heading.setValue(heading || 0);
-            }
+          entity!.properties.addProperty(key, val);
         }
+      };
 
-        if (entity.billboard) {
-            entity.billboard.rotation = -Cesium.Math.toRadians(heading || 0);
-        }
-        entity.position.addSample(time, position);
-    }
-    
+      upsertProp('mmsi', mmsi);
+      upsertProp('vesselName', vessel.name || `VESSEL ${mmsi}`);
+      upsertProp('vesselType', vessel.typeName || 'UNKNOWN');
+      upsertProp('speed', sog || 0);
+      upsertProp('heading', heading || 0);
+      upsertProp('flag', vessel.flag || '🏳️');
+      upsertProp('destination', vessel.destination || '');
+      upsertProp('colorHex', safeColor);
+      upsertProp('navStatus', vessel.navStatus || 0);
+      upsertProp('navStatusText', vessel.navStatusText || '');
+      upsertProp('imo', vessel.imo || 0);
+      upsertProp('callsign', vessel.callsign || '');
+      upsertProp('shipType', shipType || 0);
+      upsertProp('length', vessel.length || 0);
+      upsertProp('width', vessel.width || 0);
+      upsertProp('draught', vessel.draught || 0);
+      upsertProp('simulated', vessel.simulated ? 1 : 0);
+    });
+
+    // Remove vessels that are no longer in the telemetry map
+    const toRemove: any[] = [];
+    entities.values.forEach((e: any) => {
+      if (e.id?.startsWith('mmsi-') && !currentIds.has(e.id)) toRemove.push(e);
+    });
+    toRemove.forEach((e) => entities.remove(e));
+
     entities.resumeEvents();
   }, [maritimeTelemetry, layers.maritime]);
 
@@ -1135,7 +1398,7 @@ export default function MapViewer() {
   useEffect(() => {
     const Cesium = (window as any).Cesium;
     if (!Cesium || !climateDataSourceRef.current) return;
-    
+
     climateDataSourceRef.current.show = layers.climate;
     if (!layers.climate || !climateTelemetry) return;
 
@@ -1143,52 +1406,52 @@ export default function MapViewer() {
     const { buffer } = climateTelemetry;
     const STRIDE = 5;
     const count = buffer.length / STRIDE;
-    
+
     entities.suspendEvents();
 
     for (let i = 0; i < count; i++) {
-        const offset = i * STRIDE;
-        const idInt = buffer[offset + 0];
-        const stringId = `wind-${idInt}`;
-        const lng = buffer[offset + 1];
-        const lat = buffer[offset + 2];
-        const intensity = buffer[offset + 3];
-        const heading = buffer[offset + 4];
-        
-        // Intensity drives dynamic color (Deep Purple to Blazing Cyan)
-        let colorHex = '#9D00FF'; // Slow: Deep Purple
-        if (intensity > 6) colorHex = '#00F0FF'; // High: Blazing Cyan
-        else if (intensity > 3) colorHex = '#FF0055'; // Medium: Magenta
-        
-        const glowColor = Cesium.Color.fromCssColorString(colorHex).withAlpha(0.3 + (intensity * 0.05));
-        const position = Cesium.Cartesian3.fromDegrees(lng, lat, 1000 + intensity * 500); 
-        
-        // Extended tail for faster wind
-        const tailMult = 0.05 + (intensity * 0.02);
-        const tailLng = lng - (Math.sin(heading * Math.PI / 180) * tailMult);
-        const tailLat = lat - (Math.cos(heading * Math.PI / 180) * tailMult);
-        const tailPos = Cesium.Cartesian3.fromDegrees(tailLng, tailLat, 1000 + intensity * 500);
-        
-        let entity = entities.getById(stringId);
+      const offset = i * STRIDE;
+      const idInt = buffer[offset + 0];
+      const stringId = `wind-${idInt}`;
+      const lng = buffer[offset + 1];
+      const lat = buffer[offset + 2];
+      const intensity = buffer[offset + 3];
+      const heading = buffer[offset + 4];
 
-        if (!entity) {
-          entity = entities.add({
-            id: stringId,
-            polyline: {
-              positions: [tailPos, position],
-              width: 3 + intensity,
-              material: new Cesium.PolylineGlowMaterialProperty({
-                  glowPower: 0.2,
-                  taperPower: 1.0, // Creates a comet-like comet tail
-                  color: glowColor
-              })
-            }
-          });
-        } else {
-            entity.polyline.positions = [tailPos, position];
-            (entity.polyline.material as any).color = glowColor;
-            entity.polyline.width = 3 + intensity;
-        }
+      // Intensity drives dynamic color (Deep Purple to Blazing Cyan)
+      let colorHex = '#9D00FF'; // Slow: Deep Purple
+      if (intensity > 6) colorHex = '#00F0FF'; // High: Blazing Cyan
+      else if (intensity > 3) colorHex = '#FF0055'; // Medium: Magenta
+
+      const glowColor = Cesium.Color.fromCssColorString(colorHex).withAlpha(0.3 + (intensity * 0.05));
+      const position = Cesium.Cartesian3.fromDegrees(lng, lat, 1000 + intensity * 500);
+
+      // Extended tail for faster wind
+      const tailMult = 0.05 + (intensity * 0.02);
+      const tailLng = lng - (Math.sin(heading * Math.PI / 180) * tailMult);
+      const tailLat = lat - (Math.cos(heading * Math.PI / 180) * tailMult);
+      const tailPos = Cesium.Cartesian3.fromDegrees(tailLng, tailLat, 1000 + intensity * 500);
+
+      let entity = entities.getById(stringId);
+
+      if (!entity) {
+        entity = entities.add({
+          id: stringId,
+          polyline: {
+            positions: [tailPos, position],
+            width: 3 + intensity,
+            material: new Cesium.PolylineGlowMaterialProperty({
+              glowPower: 0.2,
+              taperPower: 1.0, // Creates a comet-like comet tail
+              color: glowColor
+            })
+          }
+        });
+      } else {
+        entity.polyline.positions = [tailPos, position];
+        (entity.polyline.material as any).color = glowColor;
+        entity.polyline.width = 3 + intensity;
+      }
     }
     entities.resumeEvents();
   }, [climateTelemetry, layers.climate]);
@@ -1197,7 +1460,7 @@ export default function MapViewer() {
   useEffect(() => {
     const Cesium = (window as any).Cesium;
     if (!Cesium || !cyberDataSourceRef.current) return;
-    
+
     cyberDataSourceRef.current.show = layers.cyber;
     if (!layers.cyber) return;
 
@@ -1211,25 +1474,25 @@ export default function MapViewer() {
 
     cyberIntel.forEach(attack => {
       if (!entities.getById(attack.id)) {
-          const colorHex = attack.severity === 2 ? '#FF0000' : (attack.severity === 1 ? '#FF0055' : '#9D00FF');
-          const cesiumColor = Cesium.Color.fromCssColorString(colorHex);
-          
-          const start = Cesium.Cartesian3.fromDegrees(attack.sourceLng, attack.sourceLat, 0);
-          const end = Cesium.Cartesian3.fromDegrees(attack.targetLng, attack.targetLat, 0);
-          
-          entities.add({
-            id: attack.id,
-            polyline: {
-                positions: [start, end],
-                arcType: Cesium.ArcType.GEODESIC,
-                width: 5,
-                material: new Cesium.PolylineDashMaterialProperty({
-                    color: cesiumColor,
-                    dashLength: 400000.0, 
-                    dashPattern: 255.0
-                })
-            }
-          });
+        const colorHex = attack.severity === 2 ? '#FF0000' : (attack.severity === 1 ? '#FF0055' : '#9D00FF');
+        const cesiumColor = Cesium.Color.fromCssColorString(colorHex);
+
+        const start = Cesium.Cartesian3.fromDegrees(attack.sourceLng, attack.sourceLat, 0);
+        const end = Cesium.Cartesian3.fromDegrees(attack.targetLng, attack.targetLat, 0);
+
+        entities.add({
+          id: attack.id,
+          polyline: {
+            positions: [start, end],
+            arcType: Cesium.ArcType.GEODESIC,
+            width: 5,
+            material: new Cesium.PolylineDashMaterialProperty({
+              color: cesiumColor,
+              dashLength: 400000.0,
+              dashPattern: 255.0
+            })
+          }
+        });
       }
     });
 

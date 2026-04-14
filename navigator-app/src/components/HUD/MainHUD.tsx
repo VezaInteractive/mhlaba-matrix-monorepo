@@ -6,6 +6,8 @@ import BottomDock from "./BottomDock";
 import FlightTargetingHUD from "./FlightTargetingHUD";
 import SatelliteTargetingHUD from "./SatelliteTargetingHUD";
 import MaritimeTargetingHUD from "./MaritimeTargetingHUD";
+import MaritimeHoverTooltip from "./MaritimeHoverTooltip";
+import VesselDossierPanel from "./VesselDossierPanel";
 import RealEstateModal from "./RealEstateModal";
 
 export default function MainHUD() {
@@ -25,12 +27,13 @@ export default function MainHUD() {
         <div className="absolute w-full h-[2px] bg-white/50" />
         <div className="absolute w-full h-full border border-white/50 rounded-full" />
       </div>
-
       <FlightTargetingHUD />
       <SatelliteTargetingHUD />
       <MaritimeTargetingHUD />
+      <MaritimeHoverTooltip />
       
       {/* Overlays / Modals */}
+      <VesselDossierPanel />
       <RealEstateModal />
     </div>
   );
